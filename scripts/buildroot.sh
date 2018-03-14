@@ -2,6 +2,8 @@
 set -e
 
 mirror="http://ftp.cz.debian.org/debian"
+dist="buster"
+arch="amd64"
 packages="python3.6-minimal libpython3.6-minimal libpython3.6-stdlib
 	  libc6 libgcc1
 	  libssl1.1 libexpat1 zlib1g
@@ -14,7 +16,7 @@ cd root/_tmp
 trap 'cd "$origdir" ; rm -r root/_tmp' EXIT
 
 echo "Getting package list..."
-curl -# -o Packages.xz "$mirror/dists/buster/main/binary-amd64/Packages.xz"
+curl -# -o Packages.xz "$mirror/dists/$dist/main/binary-$arch/Packages.xz"
 unxz Packages.xz
 
 for p in $packages; do
@@ -31,7 +33,7 @@ for p in $packages; do
 	name=${f##*/}
 	echo "Downloading and upacking $p..."
 	curl -# -o "$name" "$mirror/$f"
-	echo "$sha $name" | sha256sum -c -
+	echo "$sha $name" | sha256sum --quiet -c -
 	ar x "$name"
 	tar -C .. -x --no-same-owner --same-permissions -f data.tar.xz
 done
