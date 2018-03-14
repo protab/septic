@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+mirror="http://ftp.cz.debian.org/debian"
+packages="python3.6-minimal libpython3.6-minimal libpython3.6-stdlib
+	  libc6 libgcc1
+	  libssl1.1 libexpat1 zlib1g
+	  libbz2-1.0 libdb5.3 libffi6 liblzma5 libmpdec2 mime-support"
+
+origdir=$(pwd)
+mkdir -p root/_tmp
+cd root/_tmp
+
+trap 'cd "$origdir" ; rm -r root/_tmp' EXIT
+
+echo "Getting package list..."
+curl -# -o Packages.xz "$mirror/dists/buster/main/binary-amd64/Packages.xz"
+unxz Packages.xz
+
+for p in $packages; do
+	p_esc=${p//./\\.}
+	sha=$(awk "BEGIN { out = 0; }
+	     /^Package: $p_esc\$/ { out = 1; }
+	     /^\$/ { out = 0; }
+	     out == 1 && /^Filename: / { filename = \$2; }
+	     out == 1 && /^SHA256: / { sha = \$2; }
+	     END { print sha, filename; }" Packages)
+	f=${sha#* }
+	sha=${sha%% *}
+	[[ -n $f && $f != $sha ]]
+	name=${f##*/}
+	echo "Downloading and upacking $p..."
+	curl -# -o "$name" "$mirror/$f"
+	echo "$sha $name" | sha256sum -c -
+	ar x "$name"
+	tar -C .. -x --no-same-owner --same-permissions -f data.tar.xz
+done
