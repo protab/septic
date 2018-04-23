@@ -37,3 +37,7 @@ for p in $packages; do
 	ar x "$name"
 	tar -C .. -x --no-same-owner --same-permissions -f data.tar.xz
 done
+
+cd ..
+ln -s python3.6 usr/bin/python3
+ln -s python3.6 usr/bin/python
