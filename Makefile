@@ -1,7 +1,7 @@
 CFLAGS = -W -Wall -Wno-unused-result -g -std=gnu99 -D_GNU_SOURCE
 DESTDIR ?= /opt/septic
 
-OBJS = main.o
+OBJS = common.o log.o main.o
 
 all: septic build_isolate isolate.conf
 
