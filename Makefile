@@ -43,7 +43,7 @@ septic_install: septic
 	install isolate.conf $(DESTDIR)
 
 isolate_install: build_isolate
-	install isolate.bin $(DESTDIR)
+	install -m 4755 isolate.bin $(DESTDIR)
 
 rootfs_install: rootfs
 	cp -a root $(DESTDIR)
