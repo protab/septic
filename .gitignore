@@ -1,1 +1,7 @@
+config.h
+isolate.bin
+isolate.conf
 root
+scripts/build_isolate_conf
+septic
+*.o
