@@ -1,5 +1,5 @@
 CFLAGS = -W -Wall -Wno-unused-result -g -std=gnu99 -D_GNU_SOURCE
-DESTDIR ?= /opt/septic
+DESTDIR := $(shell scripts/config.py install_dir)
 
 OBJS = common.o log.o main.o
 
@@ -14,17 +14,16 @@ main.o: main.c
 %.o: %.c %.h
 	gcc $(CFLAGS) -c -o $@ $<
 
-config.h: config.defaults
-	scripts/build_config
+config.local:
 
-isolate.conf: isolate/default.cf scripts/build_isolate_conf
-	scripts/build_isolate_conf < $< > $@
+config.h: config.defaults config.local
+	scripts/build_config_h > $@
 
-scripts/build_isolate_conf: scripts/build_isolate_conf.c config.h
-	gcc $(CFLAGS) $(LDFLAGS) -o $@ $<
+isolate.conf: isolate/default.cf
+	scripts/build_isolate_conf $< > $@
 
 isolate:
-	make -C isolate isolate
+	make -C isolate isolate CONFIG=$(DESTDIR)/isolate.conf
 .PHONY: isolate
 
 isolate.bin: isolate/isolate
@@ -57,7 +56,7 @@ isolate_clean:
 	make -C isolate clean
 
 clean: isolate_clean
-	rm -f $(OBJS) septic scripts/build_isolate_conf isolate.bin isolate.conf
+	rm -f $(OBJS) config.h septic isolate.bin isolate.conf
 
 distclean: clean
 	rm -f config.h

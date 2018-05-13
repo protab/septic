@@ -1,7 +1,8 @@
 config.h
+config.local
 isolate.bin
 isolate.conf
 root
-scripts/build_isolate_conf
 septic
 *.o
+__pycache__

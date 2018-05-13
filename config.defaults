@@ -1,3 +1,7 @@
-INSTALL_DIR	""
-ROOTFS_DIR	INSTALL_DIR "root"
-HOMEFS_DIR	INSTALL_DIR "home"
+# The default configuration file. The options defined here are overriden by
+# options in 'config.local'.
+# The ${cwd} value is predefined and means the current working directory.
+
+install_dir = ${cwd}
+rootfs_dir = ${install_dir}/root
+homefs_dir = ${install_dir}/home

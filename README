@@ -9,9 +9,8 @@ sudo chmod u+s isolate.bin
 Building for deployment (in /opt/septic):
 
 git submodule update --init
-make config.h
-# edit config.h and set correct paths
+echo "install_dir = /opt/septic" > config.local
 make
 sudo make install
 sudo make systemd
-# create HOMEFS_DIR and chown it to root:root
+# create homefs_dir and chown it to root:root

@@ -43,7 +43,6 @@ static void prepare(char *bin_path, char *command)
 	char *bin = ssprintf("%s/isolate.bin", bin_path);
 	check(execl(bin, bin,
 		    "--silent",
-		    ssprintf("--config=%s/isolate.conf", bin_path),
 		    "--box-id=0",
 		    ssprintf("--%s", command),
 		    NULL));
@@ -57,7 +56,6 @@ static void start(char *bin_path)
 	char *bin = ssprintf("%s/isolate.bin", bin_path);
 	check(execl(bin, bin,
 		    "--silent",
-		    ssprintf("--config=%s/isolate.conf", bin_path),
 		    "--box-id=0",
 		    "--wall-time=30",
 		    "--mem=50000",

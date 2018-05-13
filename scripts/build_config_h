@@ -1,0 +1,16 @@
+#!/usr/bin/python3
+from config import config
+
+print(
+'''#ifndef CONFIG_H
+#define CONFIG_H
+'''
+)
+
+for key in config:
+    print('#define {}\t"{}"'.format(key.upper(), config[key]))
+
+print(
+'''
+#endif'''
+)
