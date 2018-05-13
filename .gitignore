@@ -4,5 +4,6 @@ isolate.bin
 isolate.conf
 root
 septic
+septic.service
 *.o
 __pycache__

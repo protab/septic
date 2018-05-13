@@ -47,7 +47,10 @@ isolate_install: build_isolate
 rootfs_install: rootfs
 	cp -a root $(DESTDIR)
 
-systemd:
+septic.service: septic.service.in
+	scripts/apply_config < $< > $@
+
+systemd: septic.service
 	install -m 644 septic.service /etc/systemd/system
 
 install: septic_install isolate_install rootfs_install
@@ -60,7 +63,7 @@ isolate_clean:
 	make -C isolate clean
 
 clean: isolate_clean
-	rm -f $(OBJS) config.h septic isolate.bin isolate.conf
+	rm -f $(OBJS) config.h septic.service septic isolate.bin isolate.conf
 
 distclean: clean
 	rm -f config.h
