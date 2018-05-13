@@ -2,9 +2,7 @@ Building for development:
 
 git submodule update --init
 make
-mkdir home
-sudo chown root:root home isolate.bin
-sudo chmod u+s isolate.bin
+sudo make rights
 
 Building for deployment (in /opt/septic):
 
@@ -13,4 +11,3 @@ echo "install_dir = /opt/septic" > config.local
 make
 sudo make install
 sudo make systemd
-# create homefs_dir and chown it to root:root

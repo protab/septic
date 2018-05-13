@@ -52,6 +52,10 @@ systemd:
 
 install: septic_install isolate_install rootfs_install
 
+rights: isolate.bin
+	chown root:root isolate.bin
+	chmod 4755 isolate.bin
+
 isolate_clean:
 	make -C isolate clean
 
