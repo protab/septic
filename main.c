@@ -1,6 +1,9 @@
+#include <errno.h>
 #include <libgen.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "common.h"
@@ -8,7 +11,7 @@
 #include "errno.h"
 #include "log.h"
 
-static char *get_bin_path(char *argv0)
+static char *get_bin_dir(char *argv0)
 {
 	char *tmp, *res;
 
@@ -20,7 +23,26 @@ static char *get_bin_path(char *argv0)
 	return res;
 }
 
-static void prepare(char *bin_path, char *command)
+static void smkdir(const char *path, mode_t mode)
+{
+	int res;
+
+	res = mkdir(path, mode);
+	if (res < 0 && errno != EEXIST)
+		check(res);
+}
+
+static void mkdir_meta(void)
+{
+	char *path;
+
+	smkdir(METAFS_DIR, 0777);
+	path = ssprintf("%s/run", METAFS_DIR);
+	smkdir(path, 0777);
+	sfree(path);
+}
+
+static void prepare(char *bin_dir, int user, char *command)
 {
 	pid_t res;
 
@@ -40,32 +62,33 @@ static void prepare(char *bin_path, char *command)
 		}
 		return;
 	}
-	char *bin = ssprintf("%s/isolate.bin", bin_path);
-	check(execl(bin, bin,
+	char *bin_path = ssprintf("%s/isolate.bin", bin_dir);
+	check(execl(bin_path, bin_path,
 		    "--silent",
-		    "--box-id=0",
+		    ssprintf("--box-id=%d", user),
 		    ssprintf("--%s", command),
 		    NULL));
 }
 
-static void start(char *bin_path)
+static void start(char *bin_dir, int user)
 {
-	prepare(bin_path, "cleanup");
-	prepare(bin_path, "init");
+	mkdir_meta();
+	prepare(bin_dir, user, "cleanup");
+	prepare(bin_dir, user, "init");
 
-	char *bin = ssprintf("%s/isolate.bin", bin_path);
-	check(execl(bin, bin,
+	char *bin_path = ssprintf("%s/isolate.bin", bin_dir);
+	check(execl(bin_path, bin_path,
 		    "--silent",
-		    "--box-id=0",
+		    ssprintf("--box-id=%d", user),
 		    "--wall-time=30",
 		    "--mem=50000",
-//		    ssprintf("--meta=%s/meta", HOMEFS_DIR),
+		    ssprintf("--meta=%s/run/%d", METAFS_DIR, user),
 		    "--no-default-dirs",
 		    "--dir=box=./box",
-		    ssprintf("--dir=etc=%s/root/etc", bin_path),
-		    ssprintf("--dir=lib=%s/root/lib", bin_path),
-		    ssprintf("--dir=lib64=%s/root/lib64", bin_path),
-		    ssprintf("--dir=usr=%s/root/usr", bin_path),
+		    ssprintf("--dir=etc=%s/root/etc", bin_dir),
+		    ssprintf("--dir=lib=%s/root/lib", bin_dir),
+		    ssprintf("--dir=lib64=%s/root/lib64", bin_dir),
+		    ssprintf("--dir=usr=%s/root/usr", bin_dir),
 		    "--dir=proc=proc:fs",
 		    "--env=HOME=/box",
 		    "--run",
@@ -75,12 +98,12 @@ static void start(char *bin_path)
 
 int main(int argc __unused, char **argv)
 {
-	char *bin_path;
+	char *bin_dir;
 
 	log_init("<septic>", false);
-	bin_path = get_bin_path(argv[0]);
+	bin_dir = get_bin_dir(argv[0]);
 
-	start(bin_path);
+	start(bin_dir, 0);
 
 	return 0;
 }

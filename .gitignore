@@ -2,6 +2,7 @@ config.h
 config.local
 isolate.bin
 isolate.conf
+meta
 root
 septic
 septic.service

@@ -6,3 +6,4 @@
 install_dir = ${src_dir}
 rootfs_dir = ${install_dir}/root
 homefs_dir = ${install_dir}/home
+metafs_dir = ${install_dir}/meta
