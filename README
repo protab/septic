@@ -1,6 +1,7 @@
 Building for development:
 
 git submodule update --init
+make rootfs
 make
 sudo make rights
 
@@ -8,6 +9,7 @@ Building for deployment (in /opt/septic):
 
 git submodule update --init
 echo "install_dir = /opt/septic" > config.local
+make rootfs
 make
 sudo make install
 sudo make systemd
