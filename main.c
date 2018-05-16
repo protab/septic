@@ -31,11 +31,11 @@ static void prepare(char *bin_path, char *command)
 
 		waitpid(res, &status, 0);
 		if (!WIFEXITED(status)) {
-			log_err("Could not init the sandbox (%d)", status);
+			log_err("Could not %s the sandbox (%d)", command, status);
 			exit(1);
 		}
 		if (WEXITSTATUS(status)) {
-			log_err("Could not init the sandbox (exit code %d)", WEXITSTATUS(status));
+			log_err("Could not %s the sandbox (exit code %d)", command, WEXITSTATUS(status));
 			exit(1);
 		}
 		return;
