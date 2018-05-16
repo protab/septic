@@ -20,7 +20,7 @@ class NoSectionConfigParser(configparser.ConfigParser):
         return super().__getitem__(self.fake_section).__iter__()
 
 config = NoSectionConfigParser(interpolation=configparser.ExtendedInterpolation())
-config.read_dict({ 'cwd': os.getcwd() })
+config.read_dict({ 'src_dir': os.getcwd() })
 with open('config.defaults') as f:
     config.read_file(f)
 config.read('config.local')

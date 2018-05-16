@@ -1,7 +1,8 @@
 # The default configuration file. The options defined here are overriden by
 # options in 'config.local'.
-# The ${cwd} value is predefined and means the current working directory.
+# The ${src_dir} value is determined automatically and contains the name of
+# the directory with the source files.
 
-install_dir = ${cwd}
+install_dir = ${src_dir}
 rootfs_dir = ${install_dir}/root
 homefs_dir = ${install_dir}/home
