@@ -28,14 +28,25 @@ void smkdir(const char *path, mode_t mode)
 		check_sys(res);
 }
 
-void mkdir_meta(void)
+static void sunlink(const char *path)
 {
-	char *path;
+	int res;
 
-	smkdir(METAFS_DIR, 0777);
-	path = ssprintf("%s/run", METAFS_DIR);
-	smkdir(path, 0777);
-	sfree(path);
+	res = unlink(path);
+	if (res < 0 && errno != ENOENT)
+		check_sys(res);
+}
+
+static void ssymlink(const char *oldpath, const char *newpath)
+{
+	int res;
+
+	res = symlink(oldpath, newpath);
+	if (res < 0 && errno == EEXIST) {
+		sunlink(newpath);
+		res = symlink(oldpath, newpath);
+	}
+	check_sys(res);
 }
 
 void close_fds(void)
@@ -58,4 +69,48 @@ void close_fds(void)
 		close(fd);
 	}
 	closedir(dir);
+}
+
+void meta_mkdir(void)
+{
+	smkdir(METAFS_DIR, 0777);
+}
+
+char *meta_new(int user)
+{
+	char *base, *path, *dst, *src;
+	DIR *dir;
+	struct dirent *e;
+	long max = 0;
+
+	base = ssprintf("%s/%d", METAFS_DIR, user);
+	dir = opendir(base);
+	if (!dir && errno == ENOENT) {
+		smkdir(base, 0777);
+		dir = opendir(base);
+	}
+	check_ptr(dir);
+	while ((e = readdir(dir))) {
+		char *end;
+		long number = strtol(e->d_name, &end, 10);
+
+		if (*end)
+			continue;
+		if (number > max)
+			max = number;
+	}
+	closedir(dir);
+
+	max++;
+	path = ssprintf("%s/%ld", base, max);
+	smkdir(path, 0777);
+
+	dst = ssprintf("%s/last", base);
+	src = ssprintf("%ld", max);
+	ssymlink(src, dst);
+
+	sfree(src);
+	sfree(dst);
+	sfree(base);
+	return path;
 }

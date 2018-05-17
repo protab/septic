@@ -39,6 +39,7 @@ static void start(char *bin_dir, int user)
 	prepare(bin_dir, user, "init");
 
 	char *bin_path = ssprintf("%s/isolate.bin", bin_dir);
+	char *meta_dir = meta_new(user);
 
 	close_fds();
 	check_sys(execl(bin_path, bin_path,
@@ -46,7 +47,7 @@ static void start(char *bin_dir, int user)
 			ssprintf("--box-id=%d", user),
 			"--wall-time=30",
 			"--mem=50000",
-			ssprintf("--meta=%s/run/%d", METAFS_DIR, user),
+			ssprintf("--meta=%s/isolate", meta_dir),
 			"--inherit-fds",
 			"--no-default-dirs",
 			"--dir=box=./box",
@@ -67,7 +68,7 @@ int main(int argc __unused, char **argv)
 
 	log_init("<septic>", false);
 
-	mkdir_meta();
+	meta_mkdir();
 	bin_dir = get_bin_dir(argv[0]);
 
 	start(bin_dir, 0);
