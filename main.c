@@ -40,12 +40,15 @@ static void start(char *bin_dir, int user)
 	prepare(bin_dir, user, "init");
 
 	char *bin_path = ssprintf("%s/isolate.bin", bin_dir);
+
+	close_fds();
 	check(execl(bin_path, bin_path,
 		    "--silent",
 		    ssprintf("--box-id=%d", user),
 		    "--wall-time=30",
 		    "--mem=50000",
 		    ssprintf("--meta=%s/run/%d", METAFS_DIR, user),
+		    "--inherit-fds",
 		    "--no-default-dirs",
 		    "--dir=box=./box",
 		    ssprintf("--dir=etc=%s/root/etc", bin_dir),
@@ -64,7 +67,6 @@ int main(int argc __unused, char **argv)
 	char *bin_dir;
 
 	log_init("<septic>", false);
-	close_fds();
 
 	mkdir_meta();
 	bin_dir = get_bin_dir(argv[0]);
