@@ -64,6 +64,8 @@ int main(int argc __unused, char **argv)
 	char *bin_dir;
 
 	log_init("<septic>", false);
+	close_fds();
+
 	mkdir_meta();
 	bin_dir = get_bin_dir(argv[0]);
 
