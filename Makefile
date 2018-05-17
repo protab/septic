@@ -59,6 +59,12 @@ rights: isolate.bin
 	chown root:root isolate.bin
 	chmod 4755 isolate.bin
 
+meta:
+	@if [[ -z "$(UID)" ]]; then echo "Need to specify the UID"; exit 1; fi
+	mkdir -p `scripts/config.py metafs_dir`
+	chown $(UID) `scripts/config.py metafs_dir`
+.PHONY: meta
+
 isolate_clean:
 	make -C isolate clean
 
