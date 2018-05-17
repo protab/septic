@@ -13,9 +13,7 @@ char *get_bin_dir(char *argv0)
 {
 	char *tmp, *res;
 
-	tmp = realpath(argv0, NULL);
-	if (!tmp)
-		check(errno);
+	check_ptr(tmp = realpath(argv0, NULL));
 	res = sstrdup(dirname(tmp));
 	free(tmp);
 	return res;
@@ -27,7 +25,7 @@ void smkdir(const char *path, mode_t mode)
 
 	res = mkdir(path, mode);
 	if (res < 0 && errno != EEXIST)
-		check(res);
+		check_sys(res);
 }
 
 void mkdir_meta(void)

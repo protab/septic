@@ -10,8 +10,7 @@ static void prepare(char *bin_dir, int user, char *command)
 {
 	pid_t res;
 
-	res = fork();
-	check(res);
+	check_sys(res = fork());
 	if (res > 0) {
 		int status;
 
@@ -27,11 +26,11 @@ static void prepare(char *bin_dir, int user, char *command)
 		return;
 	}
 	char *bin_path = ssprintf("%s/isolate.bin", bin_dir);
-	check(execl(bin_path, bin_path,
-		    "--silent",
-		    ssprintf("--box-id=%d", user),
-		    ssprintf("--%s", command),
-		    NULL));
+	check_sys(execl(bin_path, bin_path,
+			"--silent",
+			ssprintf("--box-id=%d", user),
+			ssprintf("--%s", command),
+			NULL));
 }
 
 static void start(char *bin_dir, int user)
@@ -42,24 +41,24 @@ static void start(char *bin_dir, int user)
 	char *bin_path = ssprintf("%s/isolate.bin", bin_dir);
 
 	close_fds();
-	check(execl(bin_path, bin_path,
-		    "--silent",
-		    ssprintf("--box-id=%d", user),
-		    "--wall-time=30",
-		    "--mem=50000",
-		    ssprintf("--meta=%s/run/%d", METAFS_DIR, user),
-		    "--inherit-fds",
-		    "--no-default-dirs",
-		    "--dir=box=./box",
-		    ssprintf("--dir=etc=%s/root/etc", bin_dir),
-		    ssprintf("--dir=lib=%s/root/lib", bin_dir),
-		    ssprintf("--dir=lib64=%s/root/lib64", bin_dir),
-		    ssprintf("--dir=usr=%s/root/usr", bin_dir),
-		    "--dir=proc=proc:fs",
-		    "--env=HOME=/box",
-		    "--run",
-		    "/usr/bin/python",
-		    NULL));
+	check_sys(execl(bin_path, bin_path,
+			"--silent",
+			ssprintf("--box-id=%d", user),
+			"--wall-time=30",
+			"--mem=50000",
+			ssprintf("--meta=%s/run/%d", METAFS_DIR, user),
+			"--inherit-fds",
+			"--no-default-dirs",
+			"--dir=box=./box",
+			ssprintf("--dir=etc=%s/root/etc", bin_dir),
+			ssprintf("--dir=lib=%s/root/lib", bin_dir),
+			ssprintf("--dir=lib64=%s/root/lib64", bin_dir),
+			ssprintf("--dir=usr=%s/root/usr", bin_dir),
+			"--dir=proc=proc:fs",
+			"--env=HOME=/box",
+			"--run",
+			"/usr/bin/python",
+			NULL));
 }
 
 int main(int argc __unused, char **argv)

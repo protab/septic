@@ -6,6 +6,7 @@
 #define __unused	__attribute__((unused))
 
 #define check(v)	do { int _ret = (v); if (_ret < 0) emerg_exit(__FILE__, __LINE__, -_ret);  } while (0)
+#define check_sys(v)	do { int _ret = (v); if (_ret < 0) emerg_exit(__FILE__, __LINE__, errno);  } while (0)
 #define check_ptr(v)	do { void *_ret = (v); if (!_ret) emerg_exit(__FILE__, __LINE__, errno); } while (0)
 
 void emerg_exit(const char *path, int line, int code);
