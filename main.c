@@ -1,46 +1,10 @@
-#include <errno.h>
-#include <libgen.h>
 #include <stdbool.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "common.h"
 #include "config.h"
-#include "errno.h"
+#include "fs.h"
 #include "log.h"
-
-static char *get_bin_dir(char *argv0)
-{
-	char *tmp, *res;
-
-	tmp = realpath(argv0, NULL);
-	if (!tmp)
-		check(errno);
-	res = sstrdup(dirname(tmp));
-	free(tmp);
-	return res;
-}
-
-static void smkdir(const char *path, mode_t mode)
-{
-	int res;
-
-	res = mkdir(path, mode);
-	if (res < 0 && errno != EEXIST)
-		check(res);
-}
-
-static void mkdir_meta(void)
-{
-	char *path;
-
-	smkdir(METAFS_DIR, 0777);
-	path = ssprintf("%s/run", METAFS_DIR);
-	smkdir(path, 0777);
-	sfree(path);
-}
 
 static void prepare(char *bin_dir, int user, char *command)
 {
@@ -72,7 +36,6 @@ static void prepare(char *bin_dir, int user, char *command)
 
 static void start(char *bin_dir, int user)
 {
-	mkdir_meta();
 	prepare(bin_dir, user, "cleanup");
 	prepare(bin_dir, user, "init");
 
@@ -101,6 +64,7 @@ int main(int argc __unused, char **argv)
 	char *bin_dir;
 
 	log_init("<septic>", false);
+	mkdir_meta();
 	bin_dir = get_bin_dir(argv[0]);
 
 	start(bin_dir, 0);
