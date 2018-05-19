@@ -5,6 +5,7 @@
 #include "config.h"
 #include "fs.h"
 #include "log.h"
+#include "meta.h"
 #include "users.h"
 
 static void prepare(const char *bin_dir, int uid, char *command)

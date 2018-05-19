@@ -1,13 +1,12 @@
 #include "fs.h"
-#include <errno.h>
 #include <dirent.h>
+#include <errno.h>
 #include <libgen.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "common.h"
-#include "config.h"
 
 char *get_bin_dir(char *argv0)
 {
@@ -28,7 +27,7 @@ void smkdir(const char *path, mode_t mode)
 		check_sys(res);
 }
 
-static void sunlink(const char *path)
+void sunlink(const char *path)
 {
 	int res;
 
@@ -37,7 +36,7 @@ static void sunlink(const char *path)
 		check_sys(res);
 }
 
-static void ssymlink(const char *oldpath, const char *newpath)
+void ssymlink(const char *oldpath, const char *newpath)
 {
 	int res;
 
@@ -68,48 +67,4 @@ void close_fds(void)
 		close(fd);
 	}
 	closedir(dir);
-}
-
-void meta_mkdir(void)
-{
-	smkdir(METAFS_DIR, 0777);
-}
-
-char *meta_new(const char *login)
-{
-	char *base, *path, *dst, *src;
-	DIR *dir;
-	struct dirent *e;
-	long max = 0;
-
-	base = ssprintf("%s/%s", METAFS_DIR, login);
-	dir = opendir(base);
-	if (!dir && errno == ENOENT) {
-		smkdir(base, 0777);
-		dir = opendir(base);
-	}
-	check_ptr(dir);
-	while ((e = readdir(dir))) {
-		char *end;
-		long number = strtol(e->d_name, &end, 10);
-
-		if (*end)
-			continue;
-		if (number > max)
-			max = number;
-	}
-	closedir(dir);
-
-	max++;
-	path = ssprintf("%s/%ld", base, max);
-	smkdir(path, 0777);
-
-	dst = ssprintf("%s/last", base);
-	src = ssprintf("%ld", max);
-	ssymlink(src, dst);
-
-	sfree(src);
-	sfree(dst);
-	sfree(base);
-	return path;
 }

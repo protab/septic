@@ -1,7 +1,7 @@
 CFLAGS = -W -Wall -Wno-unused-result -g -std=gnu99 -D_GNU_SOURCE
 DESTDIR := $(shell scripts/config.py install_dir)
 
-OBJS = common.o fs.o log.o main.o users.o
+OBJS = common.o fs.o log.o main.o meta.o users.o
 
 all: septic build_isolate isolate.conf
 
