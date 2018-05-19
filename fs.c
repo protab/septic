@@ -1,6 +1,7 @@
 #include "fs.h"
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -39,16 +40,40 @@ void sunlink(const char *path)
 		check_sys(res);
 }
 
-void ssymlink(const char *oldpath, const char *newpath)
+void ssymlink(const char *src, const char *dst)
 {
 	int res;
 
-	res = symlink(oldpath, newpath);
+	res = symlink(src, dst);
 	if (res < 0 && errno == EEXIST) {
-		sunlink(newpath);
-		res = symlink(oldpath, newpath);
+		sunlink(dst);
+		res = symlink(src, dst);
 	}
 	check_sys(res);
+}
+
+#define CP_BUF_SIZE	65536
+int cp(const char *src, const char *dst)
+{
+	void *buf;
+	int fd_src, fd_dst;
+	ssize_t res_src = -1, res_dst;
+
+	buf = salloc(CP_BUF_SIZE);
+	fd_src = open(src, O_RDONLY);
+	if (fd_src < 0)
+		return -errno;
+	check_sys(fd_dst = creat(dst, 0666));
+	while (res_src) {
+		check_sys(res_src = read(fd_src, buf, CP_BUF_SIZE));
+		while (res_src > 0) {
+			check_sys(res_dst = write(fd_dst, buf, res_src));
+			res_src -= res_dst;
+		}
+	}
+	close(fd_dst);
+	close(fd_src);
+	return 0;
 }
 
 static bool strip_nl(char *s)

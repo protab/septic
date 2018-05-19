@@ -100,3 +100,23 @@ char *meta_new(const char *login)
 	sfree(base);
 	return path;
 }
+
+int meta_cp_prg(const char *src, const char *meta_dir, int uid)
+{
+	char *dst;
+	int res;
+
+	dst = ssprintf("%s/program.py", meta_dir);
+	res = cp(src, dst);
+	sfree(dst);
+	if (res < 0)
+		return res;
+
+	dst = ssprintf("%s/%d/box/program.py", HOMEFS_DIR, uid);
+	res = cp(src, dst);
+	sfree(dst);
+	if (res < 0)
+		return res;
+
+	return 0;
+}

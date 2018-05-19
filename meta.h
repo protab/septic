@@ -12,5 +12,6 @@ struct meta_status_info {
 void meta_init(void);
 bool meta_running(const char *login);
 char *meta_new(const char *login);
+int meta_cp_prg(const char *src, const char *meta_dir, int uid);
 
 #endif

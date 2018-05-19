@@ -6,7 +6,8 @@
 char *get_bin_dir(char *argv0);
 void smkdir(const char *path, mode_t mode);
 void sunlink(const char *path);
-void ssymlink(const char *oldpath, const char *newpath);
+void ssymlink(const char *src, const char *dst);
+int cp(const char *src, const char *dst);
 
 /* Reads one line from 'stream' and returns up to 'size' characters
  * (including the terminating null). The newline character is stripped.
