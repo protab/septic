@@ -8,7 +8,7 @@
 #include "meta.h"
 #include "users.h"
 
-static void prepare(const char *bin_path, int uid, char *command)
+static void prepare_box(const char *bin_path, int uid, char *command)
 {
 	pid_t res;
 
@@ -34,34 +34,13 @@ static void prepare(const char *bin_path, int uid, char *command)
 			NULL));
 }
 
-void proc_start(const char *bin_dir, const char *login, const char *prg)
+static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta_dir, int uid)
 {
-	int uid = usr_get_uid(login);
-	char *meta_dir, *bin_path;
+	pid_t res;
 
-	log_info("starting for user %s, program %s", login, prg);
-	if (uid < 0) {
-		log_err("uknown user %s", login);
-		return;
-	}
-
-	if (meta_running(login)) {
-		log_err("user %s: already running", login);
-		return;
-	}
-
-	bin_path = ssprintf("%s/isolate.bin", bin_dir);
-	prepare(bin_path, uid, "cleanup");
-	prepare(bin_path, uid, "init");
-
-	meta_dir = meta_new(login);
-	log_info("meta directory %s", meta_dir);
-	if (meta_cp_prg(prg, meta_dir, uid) < 0) {
-		log_err("cannot copy %s", prg);
-		sfree(bin_path);
-		return;
-	}
-
+	check_sys(res = fork());
+	if (res > 0)
+		return res;
 	close_fds();
 	check_sys(execl(bin_path, bin_path,
 			"--silent",
@@ -82,4 +61,51 @@ void proc_start(const char *bin_dir, const char *login, const char *prg)
 			"/usr/bin/python",
 			"program.py",
 			NULL));
+	return 0; /* can't happen but needed to shut up gcc */
+}
+
+static void control(const char *bin_dir, const char *login, int uid, const char *prg)
+{
+	char *meta_dir, *bin_path;
+	pid_t res, pid_box;
+
+	check_sys(res = fork());
+	if (res > 0)
+		return;
+
+	bin_path = ssprintf("%s/isolate.bin", bin_dir);
+	prepare_box(bin_path, uid, "cleanup");
+	prepare_box(bin_path, uid, "init");
+
+	meta_dir = meta_new(login);
+	log_info("meta directory %s", meta_dir);
+	if (meta_cp_prg(prg, meta_dir, uid) < 0) {
+		log_err("cannot copy %s", prg);
+		sfree(bin_path);
+		return;
+	}
+
+	pid_box = run_box(bin_dir, bin_path, meta_dir, uid);
+	log_info("pid %d started", pid_box);
+	pid_box = wait(NULL);
+	log_info("pid %d finished", pid_box);
+	exit(0);
+}
+
+void proc_start(const char *bin_dir, const char *login, const char *prg)
+{
+	int uid = usr_get_uid(login);
+
+	log_info("starting for user %s, program %s", login, prg);
+	if (uid < 0) {
+		log_err("uknown user %s", login);
+		return;
+	}
+
+	if (meta_running(login)) {
+		log_err("user %s: already running", login);
+		return;
+	}
+
+	control(bin_dir, login, uid, prg);
 }
