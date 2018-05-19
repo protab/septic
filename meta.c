@@ -25,10 +25,9 @@ char *meta_new(const char *login)
 	}
 	check_ptr(dir);
 	while ((e = readdir(dir))) {
-		char *end;
-		long number = strtol(e->d_name, &end, 10);
+		long number;
 
-		if (*end)
+		if (!to_long(e->d_name, &number))
 			continue;
 		if (number > max)
 			max = number;
