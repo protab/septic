@@ -5,8 +5,9 @@
 #include "config.h"
 #include "fs.h"
 #include "log.h"
+#include "users.h"
 
-static void prepare(char *bin_dir, int user, char *command)
+static void prepare(const char *bin_dir, int uid, char *command)
 {
 	pid_t res;
 
@@ -28,23 +29,30 @@ static void prepare(char *bin_dir, int user, char *command)
 	char *bin_path = ssprintf("%s/isolate.bin", bin_dir);
 	check_sys(execl(bin_path, bin_path,
 			"--silent",
-			ssprintf("--box-id=%d", user),
+			ssprintf("--box-id=%d", uid),
 			ssprintf("--%s", command),
 			NULL));
 }
 
-static void start(char *bin_dir, int user)
+static void start(const char *bin_dir, const char *login)
 {
-	prepare(bin_dir, user, "cleanup");
-	prepare(bin_dir, user, "init");
+	int uid = usr_get_uid(login);
+
+	if (uid < 0) {
+		log_err("Uknown user %s", login);
+		return;
+	}
+
+	prepare(bin_dir, uid, "cleanup");
+	prepare(bin_dir, uid, "init");
 
 	char *bin_path = ssprintf("%s/isolate.bin", bin_dir);
-	char *meta_dir = meta_new(user);
+	char *meta_dir = meta_new(login);
 
 	close_fds();
 	check_sys(execl(bin_path, bin_path,
 			"--silent",
-			ssprintf("--box-id=%d", user),
+			ssprintf("--box-id=%d", uid),
 			"--wall-time=30",
 			"--mem=50000",
 			ssprintf("--meta=%s/isolate", meta_dir),
@@ -67,11 +75,12 @@ int main(int argc __unused, char **argv)
 	char *bin_dir;
 
 	log_init("<septic>", false);
+	usr_reload();
 
 	meta_mkdir();
 	bin_dir = get_bin_dir(argv[0]);
 
-	start(bin_dir, 0);
+	start(bin_dir, "test");
 
 	return 0;
 }

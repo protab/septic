@@ -75,14 +75,14 @@ void meta_mkdir(void)
 	smkdir(METAFS_DIR, 0777);
 }
 
-char *meta_new(int user)
+char *meta_new(const char *login)
 {
 	char *base, *path, *dst, *src;
 	DIR *dir;
 	struct dirent *e;
 	long max = 0;
 
-	base = ssprintf("%s/%d", METAFS_DIR, user);
+	base = ssprintf("%s/%s", METAFS_DIR, login);
 	dir = opendir(base);
 	if (!dir && errno == ENOENT) {
 		smkdir(base, 0777);

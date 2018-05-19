@@ -6,5 +6,6 @@ meta
 root
 septic
 septic.service
+users
 *.o
 __pycache__

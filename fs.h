@@ -9,6 +9,6 @@ void smkdir(const char *path, mode_t mode);
 void close_fds(void);
 
 void meta_mkdir(void);
-char *meta_new(int user);
+char *meta_new(const char *login);
 
 #endif
