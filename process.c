@@ -27,6 +27,8 @@ static void prepare_box(const char *bin_path, int uid, char *command)
 		}
 		return;
 	}
+	fd_to_null(1);
+	fd_to_null(2);
 	check_sys(execl(bin_path, bin_path,
 			"--silent",
 			ssprintf("--box-id=%d", uid),

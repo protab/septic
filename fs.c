@@ -126,3 +126,12 @@ void close_fds(void)
 	}
 	closedir(dir);
 }
+
+void fd_to_null(int fd)
+{
+	int nfd;
+
+	check_sys(nfd = open("/dev/null", O_RDWR));
+	check_sys(dup2(nfd, fd));
+	close(nfd);
+}
