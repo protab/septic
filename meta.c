@@ -5,7 +5,7 @@
 #include "config.h"
 #include "fs.h"
 
-void meta_mkdir(void)
+void meta_init(void)
 {
 	smkdir(METAFS_DIR, 0777);
 }

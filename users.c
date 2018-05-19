@@ -133,3 +133,8 @@ void usr_reload(void)
 	}
 	log_info("loaded %d users", cnt);
 }
+
+void usr_init(void)
+{
+	usr_reload();
+}

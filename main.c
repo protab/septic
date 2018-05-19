@@ -76,9 +76,9 @@ int main(int argc __unused, char **argv)
 	char *bin_dir;
 
 	log_init("<septic>", false);
-	usr_reload();
+	usr_init();
+	meta_init();
 
-	meta_mkdir();
 	bin_dir = get_bin_dir(argv[0]);
 
 	start(bin_dir, "test");
