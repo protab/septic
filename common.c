@@ -1,5 +1,6 @@
 #include "common.h"
 #include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -107,6 +108,26 @@ char *ssprintf(const char *format, ...)
 		alloc_err(-1);
 	va_end(ap);
 	return res;
+}
+
+bool to_int(const char *src, int *dst)
+{
+	long res;
+
+	if (!to_long(src, &res))
+		return false;
+	if (res < INT_MIN || res > INT_MAX)
+		return false;
+	*dst = res;
+	return true;
+}
+
+bool to_long(const char *src, long *dst)
+{
+	char *end;
+
+	*dst = strtol(src, &end, 10);
+	return !*end;
 }
 
 void randomize(void)

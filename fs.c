@@ -59,10 +59,9 @@ void close_fds(void)
 
 	check_ptr(dir = opendir("/proc/self/fd"));
 	while ((e = readdir(dir))) {
-		char *end;
-		long fd = strtol(e->d_name, &end, 10);
+		long fd;
 
-		if (*end)
+		if (!to_long(e->d_name, &fd))
 			continue;
 		if ((fd >= 0 && fd <= 2) || fd == dirfd(dir))
 			continue;

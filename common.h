@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 #include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #define __unused	__attribute__((unused))
@@ -21,6 +22,9 @@ void rstrip(char *s);
 size_t strlcpy(char *dest, const char *src, size_t size);
 char *sstrdup(const char *s);
 char *ssprintf(const char *format, ...) __attribute__((format(printf, 1, 2)));
+
+bool to_int(const char *src, int *dst);
+bool to_long(const char *src, long *dst);
 
 void randomize(void);
 
