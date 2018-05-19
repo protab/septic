@@ -67,7 +67,7 @@ static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta
 			ssprintf("--box-id=%d", uid),
 			"--wall-time=30",
 			"--mem=50000",
-			ssprintf("--meta=%s/isolate", meta_dir),
+			ssprintf("--meta=%s/status", meta_dir),
 			"--inherit-fds",
 			"--no-default-dirs",
 			"--dir=box=./box",

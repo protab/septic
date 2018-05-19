@@ -30,7 +30,7 @@ static int get_status(const char *login, long id, struct meta_status_info *info)
 	char buf[256];
 
 	memset(info, 0, sizeof(*info));
-	path = ssprintf("%s/%s/%ld/isolate", METAFS_DIR, login, id);
+	path = ssprintf("%s/%s/%ld/status", METAFS_DIR, login, id);
 	f = fopen(path, "r");
 	if (!f)
 		return -errno;
