@@ -44,6 +44,11 @@ static void start(const char *bin_dir, const char *login)
 		return;
 	}
 
+	if (meta_running(login)) {
+		log_err("already running");
+		return;
+	}
+
 	prepare(bin_dir, uid, "cleanup");
 	prepare(bin_dir, uid, "init");
 

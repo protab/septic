@@ -1,5 +1,9 @@
 #include "meta.h"
 #include <dirent.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include "common.h"
 #include "config.h"
@@ -8,6 +12,55 @@
 void meta_init(void)
 {
 	smkdir(METAFS_DIR, 0777);
+}
+
+static bool parse_line(char *buf, char **key, char **val)
+{
+	char *saveptr;
+
+	*key = strtok_r(buf, ":", &saveptr);
+	*val = strtok_r(NULL, ":", &saveptr);
+	return *key && *val;
+}
+
+static int get_status(const char *login, long id, struct meta_status_info *info)
+{
+	char *path;
+	FILE *f;
+	char buf[256];
+
+	memset(info, 0, sizeof(*info));
+	path = ssprintf("%s/%s/%ld/isolate", METAFS_DIR, login, id);
+	f = fopen(path, "r");
+	if (!f)
+		return -errno;
+	while (fgetline(buf, sizeof(buf), f)) {
+		char *key, *val;
+
+		info->finished = true;
+		if (!parse_line(buf, &key, &val))
+			continue;
+		if (!strcmp(key, "killed"))
+			info->killed = true;
+		else if (!strcmp(key, "exitcode"))
+			to_int(val, &info->exitcode);
+		else if (!strcmp(key, "message"))
+			strlcpy(info->message, val, sizeof(info->message));
+		else if (!strcmp(key, "status")) {
+			if (strcmp(val, "RE"))
+				info->killed = true;
+		}
+
+	}
+	fclose(f);
+	return 0;
+}
+
+bool meta_running(const char *login)
+{
+	struct meta_status_info info;
+
+	return !get_status(login, 0, &info) && !info.finished;
 }
 
 char *meta_new(const char *login)
@@ -38,7 +91,7 @@ char *meta_new(const char *login)
 	path = ssprintf("%s/%ld", base, max);
 	smkdir(path, 0777);
 
-	dst = ssprintf("%s/last", base);
+	dst = ssprintf("%s/0", base);
 	src = ssprintf("%ld", max);
 	ssymlink(src, dst);
 
