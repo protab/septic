@@ -106,7 +106,7 @@ char *fgetline(char *s, int size, FILE *stream)
 	return res;
 }
 
-void close_fds(void)
+void close_fds(int max_fd)
 {
 	/* Based on the code in isolate/util.c. Note that we may have
 	 * a fd to syslog opened at this point but it seems to be safe to
@@ -120,7 +120,7 @@ void close_fds(void)
 
 		if (!to_long(e->d_name, &fd))
 			continue;
-		if ((fd >= 0 && fd <= 2) || fd == dirfd(dir))
+		if (fd <= max_fd || fd == dirfd(dir))
 			continue;
 		close(fd);
 	}

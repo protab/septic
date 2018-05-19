@@ -15,8 +15,8 @@ int cp(const char *src, const char *dst);
  * discarded. */
 char *fgetline(char *s, int size, FILE *stream);
 
-/* Close all file descriptors except for 0, 1 and 2. */
-void close_fds(void);
+/* Close all file descriptors except for those <= max_fd. */
+void close_fds(int max_fd);
 void fd_to_null(int fd);
 
 #endif
