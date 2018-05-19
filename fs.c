@@ -2,7 +2,10 @@
 #include <dirent.h>
 #include <errno.h>
 #include <libgen.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -46,6 +49,36 @@ void ssymlink(const char *oldpath, const char *newpath)
 		res = symlink(oldpath, newpath);
 	}
 	check_sys(res);
+}
+
+static bool strip_nl(char *s)
+{
+	int len = strlen(s);
+
+	if (len && s[len - 1] == '\n') {
+		s[len - 1] = '\0';
+		return true;
+	}
+	return false;
+}
+
+char *fgetline(char *s, int size, FILE *stream)
+{
+	char *res;
+	bool consume;
+
+	res = fgets(s, size, stream);
+	if (!res)
+		return res;
+	consume = !strip_nl(s);
+	while (consume) {
+		char buf[64];
+
+		if (!fgets(buf, sizeof(buf), stream))
+			break;
+		consume = !strip_nl(buf);
+	}
+	return res;
 }
 
 void close_fds(void)

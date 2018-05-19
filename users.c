@@ -4,6 +4,7 @@
 #include <string.h>
 #include "common.h"
 #include "config.h"
+#include "fs.h"
 #include "log.h"
 
 struct user {
@@ -46,17 +47,6 @@ int usr_get_uid(const char *login)
 	return -1;
 }
 
-static bool strip_nl(char *s)
-{
-	int len = strlen(s);
-
-	if (len && s[len - 1] == '\n') {
-		s[len - 1] = '\0';
-		return true;
-	}
-	return false;
-}
-
 static int parse_line(char *buf, char **login)
 {
 	char *saveptr, *suid;
@@ -71,10 +61,10 @@ static int parse_line(char *buf, char **login)
 	return uid;
 }
 
-/* When 'stream' is not NULL, works like fgets. If 'stream' is NULL, returns
- * a default line, "0 test\n" and then EOF. To reset EOF condition, call with
+/* When 'stream' is not NULL, works like fgetline. If 'stream' is NULL, returns
+ * a default line, "0 test" and then EOF. To reset EOF condition, call with
  * null 'stream' and negative 'size'. */
-static char *fgets_default(char *s, int size, FILE *stream)
+static char *fgetline_default(char *s, int size, FILE *stream)
 {
 	static bool done;
 
@@ -85,11 +75,11 @@ static char *fgets_default(char *s, int size, FILE *stream)
 		}
 		if (done)
 			return NULL;
-		strlcpy(s, "0 test\n", size);
+		strlcpy(s, "0 test", size);
 		done = true;
 		return s;
 	}
-	return fgets(s, size, stream);
+	return fgetline(s, size, stream);
 }
 
 void usr_reload(void)
@@ -103,18 +93,16 @@ void usr_reload(void)
 	f = fopen(DB_PATH, "r");
 	if (!f) {
 		log_err("cannot open file %s, using a test user", DB_PATH);
-		fgets_default(NULL, -1, NULL);
+		fgetline_default(NULL, -1, NULL);
 		fname = "<test_user>";
 	}
 
 	free_users();
-	while (fgets_default(buf, sizeof(buf), f)) {
-		bool consume;
+	while (fgetline_default(buf, sizeof(buf), f)) {
 		int uid;
 		char *login;
 
 		line++;
-		consume = !strip_nl(buf);
 		uid = parse_line(buf, &login);
 		if (uid == -1)
 			log_warn("%s:%d: invalid format", fname, line);
@@ -123,12 +111,6 @@ void usr_reload(void)
 		else {
 			add_user(login, uid);
 			cnt++;
-		}
-
-		while (consume) {
-			if (!fgets_default(buf, sizeof(buf), f))
-				break;
-			consume = !strip_nl(buf);
 		}
 	}
 	log_info("loaded %d users", cnt);
