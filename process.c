@@ -1,4 +1,5 @@
 #include "process.h"
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -36,6 +37,20 @@ static void prepare_box(const char *bin_path, int uid, char *command)
 			NULL));
 }
 
+static void redirect_std(const char *meta_dir)
+{
+	int fd;
+	char *fname;
+
+	fname = ssprintf("%s/output", meta_dir);
+	check_sys(fd = creat(fname, 0666));
+	sfree(fname);
+	check_sys(dup2(fd, 1));
+	check_sys(dup2(fd, 2));
+	close(fd);
+	fd_to_null(0);
+}
+
 static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta_dir, int uid)
 {
 	pid_t res;
@@ -44,6 +59,9 @@ static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta
 	if (res > 0)
 		return res;
 	close_fds();
+
+	redirect_std(meta_dir);
+
 	check_sys(execl(bin_path, bin_path,
 			"--silent",
 			ssprintf("--box-id=%d", uid),
