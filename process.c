@@ -124,52 +124,12 @@ static pid_t run_master(const char *meta_dir, const char *master, int pin, int p
 	return 0; /* can't happen but needed to shut up gcc */
 }
 
-static void control(struct ctl_request *req, int uid)
-{
-	char *meta_dir, *bin_path;
-	pid_t pid_master, pid_box;
-	int pfd[4];
-
-	bin_path = ssprintf("%s/isolate.bin", bin_dir);
-	prepare_box(bin_path, uid, "cleanup");
-	prepare_box(bin_path, uid, "init");
-
-	meta_dir = meta_new(req->login);
-	log_info("meta directory %s", meta_dir);
-	if (meta_cp_prg(req->prg, meta_dir, uid) < 0) {
-		log_err("cannot copy %s", req->prg);
-		sfree(bin_path);
-		return;
-	}
-
-	check_sys(pipe(pfd));
-	check_sys(pipe(pfd + 2));
-
-	pid_master = run_master(meta_dir, req->master, pfd[0], pfd[3]);
-	log_info("master pid %d started", pid_master);
-
-	pid_box = run_box(bin_path, meta_dir, uid, req->max_secs, pfd[2], pfd[1]);
-	log_info("box pid %d started", pid_box);
-
-	while (1) {
-		pid_t res = wait(NULL);
-
-		if (res == pid_master) {
-			log_info("master pid %d finished, killing box pid %d", pid_master, pid_box);
-			kill(pid_box, SIGTERM);
-			break;
-		} else if (res == pid_box) {
-			log_info("box pid %d finished, killing master pid %d", pid_box, pid_master);
-			kill(pid_master, SIGTERM);
-			break;
-		}
-	}
-}
-
 void proc_start(int fd)
 {
-	pid_t res;
+	pid_t res, pid_master, pid_box;
 	struct ctl_request req;
+	char *meta_dir, *bin_path = NULL;
+	int pfd[4];
 	int uid;
 	int exitcode = 1;
 
@@ -182,22 +142,60 @@ void proc_start(int fd)
 	if (!ctl_parse(fd, &req))
 		exit(exitcode);
 	log_info("user %s, master %s, prg %s, max_secs %d", req.login, req.master, req.prg, req.max_secs);
-	close(fd);
 
 	uid = usr_get_uid(req.login);
 	if (uid < 0) {
 		log_err("unknown user %s", req.login);
+		ctl_report(fd, "unknown user");
 		goto out_free;
 	}
 	if (meta_running(req.login)) {
 		log_err("user %s: already running", req.login);
+		ctl_report(fd, "another program still running");
 		goto out_free;
 	}
 
-	control(&req, uid);
+	bin_path = ssprintf("%s/isolate.bin", bin_dir);
+	prepare_box(bin_path, uid, "cleanup");
+	prepare_box(bin_path, uid, "init");
+
+	meta_dir = meta_new(req.login);
+	log_info("meta directory %s", meta_dir);
+	if (meta_cp_prg(req.prg, meta_dir, uid) < 0) {
+		log_err("cannot copy %s", req.prg);
+		ctl_report(fd, "cannot access the program");
+		goto out_free;
+	}
+
+	ctl_report(fd, "OK");
+
+	check_sys(pipe(pfd));
+	check_sys(pipe(pfd + 2));
+
+	pid_master = run_master(meta_dir, req.master, pfd[0], pfd[3]);
+	log_info("master pid %d started", pid_master);
+
+	pid_box = run_box(bin_path, meta_dir, uid, req.max_secs, pfd[2], pfd[1]);
+	log_info("box pid %d started", pid_box);
+
+	while (1) {
+		res = wait(NULL);
+
+		if (res == pid_master) {
+			log_info("master pid %d finished, killing box pid %d", pid_master, pid_box);
+			kill(pid_box, SIGTERM);
+			break;
+		} else if (res == pid_box) {
+			log_info("box pid %d finished, killing master pid %d", pid_box, pid_master);
+			kill(pid_master, SIGTERM);
+			break;
+		}
+	}
+
 	exitcode = 0;
 
 out_free:
+	sfree(bin_path);
 	ctl_request_free(&req);
 	exit(exitcode);
 }

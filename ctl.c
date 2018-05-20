@@ -140,6 +140,12 @@ bool ctl_parse(int fd, struct ctl_request *req)
 	return true;
 }
 
+void ctl_report(int fd, const char *msg)
+{
+	check_sys(write(fd, msg, strlen(msg)));
+	close(fd);
+}
+
 void ctl_request_free(struct ctl_request *req)
 {
 	sfree(req->login);
@@ -155,4 +161,15 @@ void ctl_client_send(struct ctl_request *req)
 	data = ssprintf("login:%s\nmaster:%s\nprg:%s\nmax_secs:%d\n",
 			req->login, req->master, req->prg, req->max_secs);
 	check_sys(write(usock, data, strlen(data)));
+	check_sys(shutdown(usock, SHUT_WR));
+}
+
+char *ctl_client_get(void)
+{
+	char *buf = salloc(RCV_BUF_SIZE);
+	ssize_t size;
+
+	check_sys(size = read(usock, buf, RCV_BUF_SIZE - 1));
+	buf[size] = '\0';
+	return buf;
 }

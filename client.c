@@ -78,5 +78,6 @@ int main(int argc, char **argv)
 	}
 	ctl_client_init();
 	ctl_client_send(&req);
+	printf("%s\n", ctl_client_get());
 	return 0;
 }
