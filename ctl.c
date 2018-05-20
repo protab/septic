@@ -42,6 +42,7 @@ void ctl_init(void)
 	smkdir(RUNFS_DIR, 0777);
 	check_sys(usock = socket(AF_UNIX, SOCK_STREAM, 0));
 	fill_sun(&sun);
+	sunlink(sun.sun_path);
 	check_sys(bind(usock, (const struct sockaddr *)&sun, sizeof(sun)));
 	check_sys(listen(usock, LISTEN_BACKLOG));
 }
