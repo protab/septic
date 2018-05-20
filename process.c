@@ -97,7 +97,7 @@ static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta
 	return 0; /* can't happen but needed to shut up gcc */
 }
 
-static pid_t run_master(const char *bin_dir, int pin, int pout)
+static pid_t run_master(const char *bin_dir, const char *meta_dir, int pin, int pout)
 {
 	pid_t res;
 	char *master;
@@ -108,7 +108,9 @@ static pid_t run_master(const char *bin_dir, int pin, int pout)
 
 	master = ssprintf("%s/mock_master.py", bin_dir);
 	reassign_pipe(pin, pout);
-	check_sys(execl(master, master, NULL));
+	check_sys(execl(master, master,
+			meta_dir,
+			NULL));
 	return 0; /* can't happen but needed to shut up gcc */
 }
 
@@ -137,7 +139,7 @@ static void control(const char *bin_dir, const char *login, int uid, const char 
 	check_sys(pipe(pfd));
 	check_sys(pipe(pfd + 2));
 
-	pid_master = run_master(bin_dir, pfd[0], pfd[3]);
+	pid_master = run_master(bin_dir, meta_dir, pfd[0], pfd[3]);
 	log_info("master pid %d started", pid_master);
 
 	pid_box = run_box(bin_dir, bin_path, meta_dir, uid, max_secs, pfd[2], pfd[1]);
