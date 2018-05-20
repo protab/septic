@@ -145,6 +145,7 @@ void proc_start(int fd)
 	char *meta_dir, *bin_path = NULL;
 	int pfd[4];
 	int uid;
+	int err;
 	int exitcode = 1;
 
 	check_sys(res = fork());
@@ -183,7 +184,12 @@ void proc_start(int fd)
 
 	meta_dir = meta_new(req.login);
 	log_info("meta directory %s", meta_dir);
-	if (meta_cp_prg(req.prg, meta_dir, uid) < 0) {
+	err = meta_cp_prg(req.prg, meta_dir, uid);
+	if (err == -E2BIG) {
+		log_err("file %s is over %d bytes", req.prg, MAX_PRG_SIZE);
+		ctl_report(fd, "program is too large");
+		goto out_free;
+	} else if (err < 0) {
 		log_err("cannot copy %s", req.prg);
 		ctl_report(fd, "cannot access the program");
 		goto out_free;

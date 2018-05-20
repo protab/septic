@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include "common.h"
 #include "config.h"
@@ -114,8 +115,15 @@ char *meta_new(const char *login)
 
 int meta_cp_prg(const char *src, const char *meta_dir, int uid)
 {
+	struct stat info;
 	char *dst;
 	int res;
+
+	res = stat(src, &info);
+	if (res < 0)
+		return -errno;
+	if (info.st_size > MAX_PRG_SIZE)
+		return -E2BIG;
 
 	dst = ssprintf("%s/program.py", meta_dir);
 	res = cp(src, dst);

@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
+#define MAX_PRG_SIZE	65536
+
 struct meta_status_info {
 	bool finished;
 	bool killed;
