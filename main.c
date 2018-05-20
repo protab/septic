@@ -25,6 +25,7 @@ int main(int argc, char **argv)
 	static const struct option longopts[] = {
 		{ "syslog", no_argument, NULL, 's' },
 		{ "help", no_argument, NULL, 'h' },
+		{ 0 }
 	};
 	int opt;
 	bool opt_syslog = false;
