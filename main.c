@@ -3,6 +3,7 @@
 #include "common.h"
 #include "config.h"
 #include "ctl.h"
+#include "event.h"
 #include "fs.h"
 #include "log.h"
 #include "meta.h"
@@ -44,13 +45,14 @@ int main(int argc, char **argv)
 	}
 
 	log_init("septic", opt_syslog);
+	event_init();
 	usr_init();
 	meta_init();
 	proc_init(argv[0]);
 	ctl_init();
 
-	while (1)
-		ctl_accept();
+	event_loop();
 
+	event_cleanup();
 	return 0;
 }

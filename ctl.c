@@ -9,8 +9,9 @@
 #include <unistd.h>
 #include "common.h"
 #include "config.h"
-#include "log.h"
+#include "event.h"
 #include "fs.h"
+#include "log.h"
 #include "process.h"
 
 static int usock = -1;
@@ -18,6 +19,21 @@ static int usock = -1;
 #define RCV_BUF_SIZE	65536
 #define MAX_KEY_SIZE	128
 #define MAX_VAL_SIZE	65536
+
+static void ctl_accept(int sock_fd __unused, unsigned events __unused)
+{
+	int fd;
+
+	while (1) {
+		fd = accept(usock, NULL, NULL);
+		if (fd < 0 && errno == EINTR)
+			continue;
+		check_sys(fd);
+		break;
+	}
+	proc_start(fd);
+	close(fd);
+}
 
 static void fill_sun(struct sockaddr_un *sun)
 {
@@ -45,21 +61,7 @@ void ctl_init(void)
 	sunlink(sun.sun_path);
 	check_sys(bind(usock, (const struct sockaddr *)&sun, sizeof(sun)));
 	check_sys(listen(usock, LISTEN_BACKLOG));
-}
-
-void ctl_accept(void)
-{
-	int fd;
-
-	while (1) {
-		fd = accept(usock, NULL, NULL);
-		if (fd < 0 && errno == EINTR)
-			continue;
-		check_sys(fd);
-		break;
-	}
-	proc_start(fd);
-	close(fd);
+	event_add(usock, EV_READ, ctl_accept);
 }
 
 static bool store_str(char *key, char *val, char *match_key, char **dst)

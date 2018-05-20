@@ -10,7 +10,6 @@ struct ctl_request {
 };
 
 void ctl_init(void);
-void ctl_accept(void);
 bool ctl_parse(int fd, struct ctl_request *req);
 void ctl_report(int fd, const char *msg);
 void ctl_request_free(struct ctl_request *req);
