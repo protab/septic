@@ -147,3 +147,12 @@ void ctl_request_free(struct ctl_request *req)
 	sfree(req->prg);
 	memset(req, 0, sizeof(*req));
 }
+
+void ctl_client_send(struct ctl_request *req)
+{
+	char *data;
+
+	data = ssprintf("login:%s\nmaster:%s\nprg:%s\nmax_secs:%d\n",
+			req->login, req->master, req->prg, req->max_secs);
+	check_sys(write(usock, data, strlen(data)));
+}

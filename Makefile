@@ -1,12 +1,15 @@
 CFLAGS = -W -Wall -Wno-unused-result -g -std=gnu99 -D_GNU_SOURCE
 DESTDIR := $(shell scripts/config.py install_dir)
 
-OBJS = common.o ctl.o fs.o log.o main.o meta.o process.o users.o
+OBJS = common.o ctl.o fs.o log.o meta.o process.o users.o
 
-all: septic build_isolate isolate.conf
+all: septic build_isolate isolate.conf client
 
-septic: config.h $(OBJS)
-	gcc $(LDFLAGS) -o $@ $(OBJS)
+septic: config.h main.o $(OBJS)
+	gcc $(LDFLAGS) -o $@ main.o $(OBJS)
+
+client: config.h client.o $(OBJS)
+	gcc $(LDFLAGS) -o $@ client.o $(OBJS)
 
 main.o: main.c
 	gcc $(CFLAGS) -c -o $@ $<
