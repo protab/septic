@@ -1,6 +1,7 @@
 client
 config.h
 config.local
+home
 isolate.bin
 isolate.conf
 meta
