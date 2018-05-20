@@ -64,7 +64,7 @@ static void reassign_pipe(int pin, int pout)
 }
 
 static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta_dir, int uid,
-		     int pin, int pout)
+		     int max_secs, int pin, int pout)
 {
 	pid_t res;
 
@@ -78,7 +78,7 @@ static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta
 	check_sys(execl(bin_path, bin_path,
 			"--silent",
 			ssprintf("--box-id=%d", uid),
-			"--wall-time=30",
+			ssprintf("--wall-time=%d", max_secs),
 			"--mem=50000",
 			ssprintf("--meta=%s/status", meta_dir),
 			"--inherit-fds",
@@ -112,7 +112,7 @@ static pid_t run_master(const char *bin_dir, int pin, int pout)
 	return 0; /* can't happen but needed to shut up gcc */
 }
 
-static void control(const char *bin_dir, const char *login, int uid, const char *prg)
+static void control(const char *bin_dir, const char *login, int uid, const char *prg, int max_secs)
 {
 	char *meta_dir, *bin_path;
 	pid_t res, pid_master, pid_box;
@@ -140,7 +140,7 @@ static void control(const char *bin_dir, const char *login, int uid, const char 
 	pid_master = run_master(bin_dir, pfd[0], pfd[3]);
 	log_info("master pid %d started", pid_master);
 
-	pid_box = run_box(bin_dir, bin_path, meta_dir, uid, pfd[2], pfd[1]);
+	pid_box = run_box(bin_dir, bin_path, meta_dir, uid, max_secs, pfd[2], pfd[1]);
 	log_info("box pid %d started", pid_box);
 
 	while (1) {
@@ -159,7 +159,7 @@ static void control(const char *bin_dir, const char *login, int uid, const char 
 	exit(0);
 }
 
-void proc_start(const char *bin_dir, const char *login, const char *prg)
+void proc_start(const char *bin_dir, const char *login, const char *prg, int max_secs)
 {
 	int uid = usr_get_uid(login);
 
@@ -174,5 +174,5 @@ void proc_start(const char *bin_dir, const char *login, const char *prg)
 		return;
 	}
 
-	control(bin_dir, login, uid, prg);
+	control(bin_dir, login, uid, prg, max_secs);
 }

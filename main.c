@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 
 	bin_dir = get_bin_dir(argv[0]);
 
-	proc_start(bin_dir, "test", argv[optind]);
+	proc_start(bin_dir, "test", argv[optind], 30);
 
 	return 0;
 }
