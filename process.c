@@ -18,6 +18,18 @@ void proc_init(char *argv0)
 	bin_dir = get_bin_dir(argv0);
 }
 
+static void proc_kill(const char *login)
+{
+	struct meta_status_info info;
+
+	if (meta_get_status(login, 0, &info) < 0 || info.finished) {
+		log_info("nothing to kill");
+		return;
+	}
+	log_info("killing master pid %d", info.master);
+	kill(info.master, SIGKILL);
+}
+
 static void prepare_box(const char *bin_path, int uid, char *command)
 {
 	pid_t res;
@@ -113,8 +125,10 @@ static pid_t run_master(const char *meta_dir, const char *master, int pin, int p
 	pid_t res;
 
 	check_sys(res = fork());
-	if (res > 0)
+	if (res > 0) {
+		meta_record_pid(meta_dir, res);
 		return res;
+	}
 
 	log_reinit("master");
 	reassign_pipe(pin, pout);
@@ -141,7 +155,8 @@ void proc_start(int fd)
 	log_info("getting parameters");
 	if (!ctl_parse(fd, &req))
 		exit(exitcode);
-	log_info("user %s, master %s, prg %s, max_secs %d", req.login, req.master, req.prg, req.max_secs);
+	log_info("action %d, user %s, master %s, prg %s, max_secs %d",
+		 req.action, req.login, req.master, req.prg, req.max_secs);
 
 	uid = usr_get_uid(req.login);
 	if (uid < 0) {
@@ -149,6 +164,13 @@ void proc_start(int fd)
 		ctl_report(fd, "unknown user");
 		goto out_free;
 	}
+
+	if (req.action == CTL_KILL) {
+		proc_kill(req.login);
+		ctl_report(fd, "OK");
+		goto out_free;
+	}
+
 	if (meta_running(req.login)) {
 		log_err("user %s: already running", req.login);
 		ctl_report(fd, "another program still running");

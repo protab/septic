@@ -11,13 +11,11 @@ static void help(char *argv0)
 	printf(
 		"Usage: %s [OPTION]...\n"
 		"\n"
-		"Mandatory arguments:\n"
 		"  -p, --prog=PROGRAM     program to run in sandbox\n"
 		"  -m, --master=PROGRAM   master program\n"
-		"\n"
-		"Optional arguments:\n"
-		"  -u, --user=LOGIN       user [test]\n"
-		"  -t, --time=SECONDS     maximum time the program can run [30]\n"
+		"  -u, --user=LOGIN       [test] user\n"
+		"  -t, --time=SECONDS     [30] maximum time the program can run\n"
+		"  -k, --kill             kill a running program\n"
 		"  -h, --help             this help\n",
 		argv0
 	      );
@@ -38,6 +36,7 @@ int main(int argc, char **argv)
 		{ "master", required_argument, NULL, 'm' },
 		{ "user", required_argument, NULL, 'u' },
 		{ "time", required_argument, NULL, 't' },
+		{ "kill", no_argument, NULL, 'k' },
 		{ "help", no_argument, NULL, 'h' },
 		{ 0 }
 	};
@@ -49,8 +48,9 @@ int main(int argc, char **argv)
 	memset(&req, 0, sizeof(req));
 	req.login = "test";
 	req.max_secs = 30;
+	req.action = CTL_RUN;
 
-	while ((opt = getopt_long(argc, argv, "p:m:u:t:h", longopts, NULL)) >= 0) {
+	while ((opt = getopt_long(argc, argv, "p:m:u:t:kh", longopts, NULL)) >= 0) {
 		switch (opt) {
 		case 'p':
 			req.prg = to_path(optarg);
@@ -64,6 +64,9 @@ int main(int argc, char **argv)
 		case 't':
 			to_int(optarg, &req.max_secs);
 			break;
+		case 'k':
+			req.action = CTL_KILL;
+			break;
 		case 'h':
 			help(argv[0]);
 			return 0;
@@ -72,7 +75,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (!req.prg || !req.master) {
+	if (req.action == CTL_RUN && (!req.prg || !req.master)) {
 		log_err("missing -p or -m argument (try -h for help)");
 		return 1;
 	}

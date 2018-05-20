@@ -92,7 +92,8 @@ static void parse_one(char *key, char *val, struct ctl_request *req)
 	store_str(key, val, "login", &req->login) ||
 	store_str(key, val, "master", &req->master) ||
 	store_str(key, val, "prg", &req->prg) ||
-	store_int(key, val, "max_secs", &req->max_secs);
+	store_int(key, val, "max_secs", &req->max_secs) ||
+	store_int(key, val, "action", &req->action);
 }
 
 bool ctl_parse(int fd, struct ctl_request *req)
@@ -135,8 +136,24 @@ bool ctl_parse(int fd, struct ctl_request *req)
 			}
 		}
 	}
-	if (!req->login || !req->master || !req->prg || !req->max_secs) {
-		log_err("missing one of mandatory fields");
+	switch (req->action) {
+	case CTL_RUN:
+		if (!req->login || !req->master || !req->prg || !req->max_secs) {
+			log_err("missing one of mandatory fields");
+			ctl_report(fd, "missing one of mandatory fields");
+			return false;
+		}
+		break;
+	case CTL_KILL:
+		if (!req->login) {
+			log_err("missing login");
+			ctl_report(fd, "missing login");
+			return false;
+		}
+		break;
+	default:
+		log_err("missing or invalid action");
+		ctl_report(fd, "missing or invalid action");
 		return false;
 	}
 	return true;
@@ -160,8 +177,8 @@ void ctl_client_send(struct ctl_request *req)
 {
 	char *data;
 
-	data = ssprintf("login:%s\nmaster:%s\nprg:%s\nmax_secs:%d\n",
-			req->login, req->master, req->prg, req->max_secs);
+	data = ssprintf("login:%s\nmaster:%s\nprg:%s\nmax_secs:%d\naction:%d\n",
+			req->login, req->master, req->prg, req->max_secs, req->action);
 	check_sys(write(usock, data, strlen(data)));
 	check_sys(shutdown(usock, SHUT_WR));
 }

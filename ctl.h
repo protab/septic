@@ -2,11 +2,18 @@
 #define CTL_H
 #include <stdbool.h>
 
+enum ctl_action {
+	CTL_NONE,
+	CTL_RUN,
+	CTL_KILL,
+};
+
 struct ctl_request {
 	char *login;
 	char *master;
 	char *prg;
 	int max_secs;
+	int action;
 };
 
 void ctl_init(void);

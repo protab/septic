@@ -23,7 +23,7 @@ static bool parse_line(char *buf, char **key, char **val)
 	return *key && *val;
 }
 
-static int get_status(const char *login, long id, struct meta_status_info *info)
+int meta_get_status(const char *login, long id, struct meta_status_info *info)
 {
 	char *path;
 	FILE *f;
@@ -32,6 +32,7 @@ static int get_status(const char *login, long id, struct meta_status_info *info)
 	memset(info, 0, sizeof(*info));
 	path = ssprintf("%s/%s/%ld/status", METAFS_DIR, login, id);
 	f = fopen(path, "r");
+	sfree(path);
 	if (!f)
 		return -errno;
 	while (fgetline(buf, sizeof(buf), f)) {
@@ -53,6 +54,16 @@ static int get_status(const char *login, long id, struct meta_status_info *info)
 
 	}
 	fclose(f);
+
+	path = ssprintf("%s/%s/%ld/master", METAFS_DIR, login, id);
+	f = fopen(path, "r");
+	sfree(path);
+	if (f) {
+		fgets(buf, sizeof(buf), f);
+		to_int(buf, &info->master);
+		fclose(f);
+	}
+
 	return 0;
 }
 
@@ -60,7 +71,7 @@ bool meta_running(const char *login)
 {
 	struct meta_status_info info;
 
-	return !get_status(login, 0, &info) && !info.finished;
+	return !meta_get_status(login, 0, &info) && !info.finished;
 }
 
 char *meta_new(const char *login)
@@ -119,4 +130,16 @@ int meta_cp_prg(const char *src, const char *meta_dir, int uid)
 		return res;
 
 	return 0;
+}
+
+void meta_record_pid(const char *meta_dir, pid_t pid)
+{
+	char *dst;
+	FILE *f;
+
+	dst = ssprintf("%s/master", meta_dir);
+	check_ptr(f = fopen(dst, "w"));
+	check_sys(fprintf(f, "%d", pid));
+	fclose(f);
+	sfree(dst);
 }
