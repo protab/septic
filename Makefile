@@ -18,6 +18,7 @@ main.o: main.c
 	gcc $(CFLAGS) -c -o $@ $<
 
 config.local:
+	touch $@
 
 config.h: config.defaults config.local
 	scripts/build_config_h > $@
