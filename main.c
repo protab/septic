@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	log_init("<septic>", opt_syslog);
+	log_init("septic", opt_syslog);
 	usr_init();
 	meta_init();
 	proc_init(argv[0]);

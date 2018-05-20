@@ -92,7 +92,7 @@ void usr_reload(void)
 	log_info("loading users from %s", DB_PATH);
 	f = fopen(DB_PATH, "r");
 	if (!f) {
-		log_err("cannot open file %s, using a test user", DB_PATH);
+		log_warn("cannot open file %s, using a test user", DB_PATH);
 		fgetline_default(NULL, -1, NULL);
 		fname = "<test_user>";
 	}

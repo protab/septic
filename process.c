@@ -155,11 +155,11 @@ static void control(struct ctl_request *req, int uid)
 		pid_t res = wait(NULL);
 
 		if (res == pid_master) {
-			log_info("master pid %d finished", pid_master);
+			log_info("master pid %d finished, killing box pid %d", pid_master, pid_box);
 			kill(pid_box, SIGTERM);
 			break;
 		} else if (res == pid_box) {
-			log_info("box pid %d finished", pid_box);
+			log_info("box pid %d finished, killing master pid %d", pid_box, pid_master);
 			kill(pid_master, SIGTERM);
 			break;
 		}
@@ -178,7 +178,7 @@ void proc_start(int fd)
 		return;
 
 	log_reinit("control");
-	log_info("started");
+	log_info("getting parameters");
 	if (!ctl_parse(fd, &req))
 		exit(exitcode);
 	log_info("user %s, master %s, prg %s, max_secs %d", req.login, req.master, req.prg, req.max_secs);
