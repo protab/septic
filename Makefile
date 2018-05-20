@@ -85,5 +85,8 @@ clean: isolate_clean
 	rm -f $(OBJS) config.h septic.service septic isolate.bin isolate.conf
 
 distclean: clean
-	rm -f config.h
+	rm -f config.local
 	rm -rf root
+	rm -rf meta
+	rm -rf run
+	rm -rf home
