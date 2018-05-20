@@ -28,6 +28,15 @@ void log_init(const char *name, bool to_syslog_)
 		openlog(name, LOG_PID, LOG_USER);
 }
 
+void log_reinit(const char *name)
+{
+	pid = getpid();
+	if (name) {
+		sfree(domain);
+		domain = sstrdup(name);
+	}
+}
+
 #define MAX_LOG	1024
 
 int log_stderr(int level, const char *format, va_list ap)

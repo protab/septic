@@ -1,7 +1,7 @@
 CFLAGS = -W -Wall -Wno-unused-result -g -std=gnu99 -D_GNU_SOURCE
 DESTDIR := $(shell scripts/config.py install_dir)
 
-OBJS = common.o fs.o log.o main.o meta.o process.o users.o
+OBJS = common.o ctl.o fs.o log.o main.o meta.o process.o users.o
 
 all: septic build_isolate isolate.conf
 
@@ -59,11 +59,20 @@ rights: isolate.bin
 	chown root:root isolate.bin
 	chmod 4755 isolate.bin
 
-meta:
+check_uid:
 	@if [[ -z "$(UID)" ]]; then echo "Need to specify the UID"; exit 1; fi
+
+meta:
 	mkdir -p `scripts/config.py metafs_dir`
 	chown $(UID) `scripts/config.py metafs_dir`
 .PHONY: meta
+
+run:
+	mkdir -p `scripts/config.py runfs_dir`
+	chown $(UID) `scripts/config.py runfs_dir`
+.PHONY: run
+
+mkdirs: check_uid meta run
 
 isolate_clean:
 	make -C isolate clean

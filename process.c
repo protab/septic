@@ -5,10 +5,18 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "common.h"
+#include "ctl.h"
 #include "fs.h"
 #include "log.h"
 #include "meta.h"
 #include "users.h"
+
+static char *bin_dir;
+
+void proc_init(char *argv0)
+{
+	bin_dir = get_bin_dir(argv0);
+}
 
 static void prepare_box(const char *bin_path, int uid, char *command)
 {
@@ -29,6 +37,8 @@ static void prepare_box(const char *bin_path, int uid, char *command)
 		}
 		return;
 	}
+
+	log_reinit("prepare");
 	fd_to_null(1);
 	fd_to_null(2);
 	check_sys(execl(bin_path, bin_path,
@@ -63,7 +73,7 @@ static void reassign_pipe(int pin, int pout)
 	close_fds(4);
 }
 
-static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta_dir, int uid,
+static pid_t run_box(const char *bin_path, const char *meta_dir, int uid,
 		     int max_secs, int pin, int pout)
 {
 	pid_t res;
@@ -72,6 +82,7 @@ static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta
 	if (res > 0)
 		return res;
 
+	log_reinit("box");
 	redirect_std(meta_dir);
 	reassign_pipe(pin, pout);
 
@@ -97,16 +108,15 @@ static pid_t run_box(const char *bin_dir, const char *bin_path, const char *meta
 	return 0; /* can't happen but needed to shut up gcc */
 }
 
-static pid_t run_master(const char *bin_dir, const char *meta_dir, int pin, int pout)
+static pid_t run_master(const char *meta_dir, const char *master, int pin, int pout)
 {
 	pid_t res;
-	char *master;
 
 	check_sys(res = fork());
 	if (res > 0)
 		return res;
 
-	master = ssprintf("%s/mock_master.py", bin_dir);
+	log_reinit("master");
 	reassign_pipe(pin, pout);
 	check_sys(execl(master, master,
 			meta_dir,
@@ -114,24 +124,20 @@ static pid_t run_master(const char *bin_dir, const char *meta_dir, int pin, int 
 	return 0; /* can't happen but needed to shut up gcc */
 }
 
-static void control(const char *bin_dir, const char *login, int uid, const char *prg, int max_secs)
+static void control(struct ctl_request *req, int uid)
 {
 	char *meta_dir, *bin_path;
-	pid_t res, pid_master, pid_box;
+	pid_t pid_master, pid_box;
 	int pfd[4];
-
-	check_sys(res = fork());
-	if (res > 0)
-		return;
 
 	bin_path = ssprintf("%s/isolate.bin", bin_dir);
 	prepare_box(bin_path, uid, "cleanup");
 	prepare_box(bin_path, uid, "init");
 
-	meta_dir = meta_new(login);
+	meta_dir = meta_new(req->login);
 	log_info("meta directory %s", meta_dir);
-	if (meta_cp_prg(prg, meta_dir, uid) < 0) {
-		log_err("cannot copy %s", prg);
+	if (meta_cp_prg(req->prg, meta_dir, uid) < 0) {
+		log_err("cannot copy %s", req->prg);
 		sfree(bin_path);
 		return;
 	}
@@ -139,14 +145,15 @@ static void control(const char *bin_dir, const char *login, int uid, const char 
 	check_sys(pipe(pfd));
 	check_sys(pipe(pfd + 2));
 
-	pid_master = run_master(bin_dir, meta_dir, pfd[0], pfd[3]);
+	pid_master = run_master(meta_dir, req->master, pfd[0], pfd[3]);
 	log_info("master pid %d started", pid_master);
 
-	pid_box = run_box(bin_dir, bin_path, meta_dir, uid, max_secs, pfd[2], pfd[1]);
+	pid_box = run_box(bin_path, meta_dir, uid, req->max_secs, pfd[2], pfd[1]);
 	log_info("box pid %d started", pid_box);
 
 	while (1) {
-		res = wait(NULL);
+		pid_t res = wait(NULL);
+
 		if (res == pid_master) {
 			log_info("master pid %d finished", pid_master);
 			kill(pid_box, SIGTERM);
@@ -157,24 +164,40 @@ static void control(const char *bin_dir, const char *login, int uid, const char 
 			break;
 		}
 	}
-
-	exit(0);
 }
 
-void proc_start(const char *bin_dir, const char *login, const char *prg, int max_secs)
+void proc_start(int fd)
 {
-	int uid = usr_get_uid(login);
+	pid_t res;
+	struct ctl_request req;
+	int uid;
+	int exitcode = 1;
 
-	log_info("starting for user %s, program %s", login, prg);
+	check_sys(res = fork());
+	if (res > 0)
+		return;
+
+	log_reinit("control");
+	log_info("started");
+	if (!ctl_parse(fd, &req))
+		exit(exitcode);
+	log_info("user %s, master %s, prg %s, max_secs %d", req.login, req.master, req.prg, req.max_secs);
+	close(fd);
+
+	uid = usr_get_uid(req.login);
 	if (uid < 0) {
-		log_err("uknown user %s", login);
-		return;
+		log_err("unknown user %s", req.login);
+		goto out_free;
+	}
+	if (meta_running(req.login)) {
+		log_err("user %s: already running", req.login);
+		goto out_free;
 	}
 
-	if (meta_running(login)) {
-		log_err("user %s: already running", login);
-		return;
-	}
+	control(&req, uid);
+	exitcode = 0;
 
-	control(bin_dir, login, uid, prg, max_secs);
+out_free:
+	ctl_request_free(&req);
+	exit(exitcode);
 }

@@ -12,5 +12,5 @@ echo "install_dir = /opt/septic" > config.local
 make rootfs
 make
 sudo make install
-sudo make meta UID=septic
+sudo make mkdirs UID=septic
 sudo make systemd

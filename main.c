@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "common.h"
 #include "config.h"
+#include "ctl.h"
 #include "fs.h"
 #include "log.h"
 #include "meta.h"
@@ -27,7 +28,6 @@ int main(int argc, char **argv)
 	};
 	int opt;
 	bool opt_syslog = false;
-	char *bin_dir;
 
 	while ((opt = getopt_long(argc, argv, "sh", longopts, NULL)) >= 0) {
 		switch (opt) {
@@ -42,18 +42,14 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (optind >= argc) {
-		help(argv[0]);
-		return 1;
-	}
-
 	log_init("<septic>", opt_syslog);
 	usr_init();
 	meta_init();
+	proc_init(argv[0]);
+	ctl_init();
 
-	bin_dir = get_bin_dir(argv[0]);
-
-	proc_start(bin_dir, "test", argv[optind], 30);
+	while (1)
+		ctl_accept();
 
 	return 0;
 }
