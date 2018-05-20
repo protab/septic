@@ -35,10 +35,13 @@ isolate.bin: isolate/isolate
 
 build_isolate: isolate isolate.bin
 
-rootfs: root/usr/bin/python3.6
+rootfs: root/usr/bin/python3.6 root/usr/bin/wrapper.py
 
 root/usr/bin/python3.6:
 	scripts/build_rootfs
+
+root/usr/bin/wrapper.py: python/wrapper.py
+	install -m 644 $< $@
 
 septic_install: septic
 	install -d $(DESTDIR)

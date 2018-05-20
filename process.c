@@ -103,7 +103,7 @@ static pid_t run_box(const char *bin_path, const char *meta_dir, int uid,
 			"--env=HOME=/box",
 			"--run",
 			"/usr/bin/python",
-			"program.py",
+			"/usr/bin/wrapper.py",
 			NULL));
 	return 0; /* can't happen but needed to shut up gcc */
 }
