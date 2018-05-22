@@ -7,7 +7,8 @@ arch="amd64"
 packages="python3.6-minimal libpython3.6-minimal libpython3.6-stdlib
 	  libc6 libgcc1
 	  libssl1.1 libexpat1 zlib1g
-	  libbz2-1.0 libdb5.3 libffi6 liblzma5 libmpdec2 mime-support"
+	  libbz2-1.0 libdb5.3 libffi6 liblzma5 libmpdec2 mime-support
+	  libc-bin"
 
 origdir=$(pwd)
 mkdir -p root/_tmp
