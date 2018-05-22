@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 			req.prg = to_path(optarg);
 			break;
 		case 'm':
-			req.master = to_path(optarg);
+			req.master = optarg;
 			break;
 		case 'u':
 			req.login = optarg;

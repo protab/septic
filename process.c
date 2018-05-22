@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "common.h"
+#include "config.h"
 #include "ctl.h"
 #include "fs.h"
 #include "log.h"
@@ -95,7 +96,7 @@ static pid_t run_box(const char *bin_path, const char *meta_dir, int uid,
 		return res;
 
 	log_reinit("box");
-	redirect_std(meta_dir);
+	//redirect_std(meta_dir);
 	reassign_pipe(pin, pout);
 
 	check_sys(execl(bin_path, bin_path,
@@ -133,8 +134,10 @@ static pid_t run_master(const char *meta_dir, const char *master, int pin, int p
 
 	log_reinit("master");
 	reassign_pipe(pin, pout);
-	check_sys(execl(master, master,
+	check_sys(execlp("python3", "python3",
+			ssprintf("%s/python/master.py", INSTALL_DIR),
 			meta_dir,
+			master,
 			NULL));
 	return 0; /* can't happen but needed to shut up gcc */
 }

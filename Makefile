@@ -47,6 +47,8 @@ septic_install: septic
 	install -d $(DESTDIR)
 	install septic $(DESTDIR)
 	install isolate.conf $(DESTDIR)
+	install -d $(DESTDIR)/python
+	install -m 644 python/master.py $(DESTDIR)/python
 
 isolate_install: build_isolate
 	install -m 4755 isolate.bin $(DESTDIR)
