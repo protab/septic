@@ -3,7 +3,7 @@ DESTDIR := $(shell scripts/config.py install_dir)
 
 OBJS = common.o ctl.o event.o fs.o log.o meta.o process.o users.o
 
-all: septic build_isolate isolate.conf client
+all: septic build_isolate isolate.conf client rootfs
 
 septic: config.h main.o $(OBJS)
 	gcc $(LDFLAGS) -o $@ main.o $(OBJS)
