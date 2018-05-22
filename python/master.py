@@ -7,7 +7,7 @@ import selectors
 import sys
 
 limit_out = 65536
-XMIT_LIMIT = 128 * 1024
+XFER_LIMIT = 128 * 1024
 
 class PassThruException(Exception):
     pass
@@ -74,7 +74,7 @@ def process_input(msg):
     return { 'data': data }
 
 def xmit(data):
-    if len(data) > XMIT_LIMIT:
+    if len(data) > XFER_LIMIT:
         raise ValueError("Too large data")
     pipe_out.write(data)
     pipe_out.flush()
@@ -92,7 +92,7 @@ finish = False
 while not finish:
     for key, events in sel.select():
         if key.fileobj == pipe_in:
-            data = pipe_in.read(XMIT_LIMIT)
+            data = pipe_in.read(XFER_LIMIT)
             if len(data) == 0:
                 finish = True
                 break
