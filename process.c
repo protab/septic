@@ -61,20 +61,6 @@ static void prepare_box(const char *bin_path, int uid, char *command)
 			NULL));
 }
 
-static void redirect_std(const char *meta_dir)
-{
-	int fd;
-	char *fname;
-
-	fname = ssprintf("%s/output", meta_dir);
-	check_sys(fd = creat(fname, 0666));
-	sfree(fname);
-	check_sys(dup2(fd, 1));
-	check_sys(dup2(fd, 2));
-	close(fd);
-	fd_to_null(0);
-}
-
 static void reassign_pipe(int pin, int pout)
 {
 	/* The following is safe: we have 4 pipe descriptors, the first one
@@ -96,7 +82,7 @@ static pid_t run_box(const char *bin_path, const char *meta_dir, int uid,
 		return res;
 
 	log_reinit("box");
-	//redirect_std(meta_dir);
+	fd_to_null(0);
 	reassign_pipe(pin, pout);
 
 	check_sys(execl(bin_path, bin_path,
