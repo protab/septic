@@ -166,19 +166,19 @@ void proc_start(int fd)
 	uid = usr_get_uid(req.login);
 	if (uid < 0) {
 		log_err("unknown user %s", req.login);
-		ctl_report(fd, "unknown user");
+		ctl_report(fd, "unknown user", NULL);
 		goto out_free;
 	}
 
 	if (req.action == CTL_KILL) {
 		proc_kill(req.login);
-		ctl_report(fd, "OK");
+		ctl_report(fd, "ok", NULL);
 		goto out_free;
 	}
 
 	if (meta_running(req.login)) {
 		log_err("user %s: already running", req.login);
-		ctl_report(fd, "another program still running");
+		ctl_report(fd, "already running", NULL);
 		goto out_free;
 	}
 
@@ -191,15 +191,15 @@ void proc_start(int fd)
 	err = meta_cp_prg(req.prg, meta_dir, uid);
 	if (err == -E2BIG) {
 		log_err("file %s is over %d bytes", req.prg, MAX_PRG_SIZE);
-		ctl_report(fd, "program is too large");
+		ctl_report(fd, "too large", NULL);
 		goto out_free;
 	} else if (err < 0) {
 		log_err("cannot copy %s", req.prg);
-		ctl_report(fd, "cannot access the program");
+		ctl_report(fd, "not found", NULL);
 		goto out_free;
 	}
 
-	ctl_report(fd, "OK");
+	ctl_report(fd, "ok", meta_dir);
 
 	check_sys(pipe(pfd));
 	check_sys(pipe(pfd + 2));

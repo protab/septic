@@ -140,28 +140,34 @@ bool ctl_parse(int fd, struct ctl_request *req)
 	case CTL_RUN:
 		if (!req->login || !req->master || !req->prg || !req->max_secs) {
 			log_err("missing one of mandatory fields");
-			ctl_report(fd, "missing one of mandatory fields");
+			ctl_report(fd, "parse error", NULL);
 			return false;
 		}
 		break;
 	case CTL_KILL:
 		if (!req->login) {
 			log_err("missing login");
-			ctl_report(fd, "missing login");
+			ctl_report(fd, "parse error", NULL);
 			return false;
 		}
 		break;
 	default:
 		log_err("missing or invalid action");
-		ctl_report(fd, "missing or invalid action");
+		ctl_report(fd, "parse error", NULL);
 		return false;
 	}
 	return true;
 }
 
-void ctl_report(int fd, const char *msg)
+void ctl_report(int fd, char *code, char *aux)
 {
+	char *msg = code;
+
+	if (aux)
+		msg = ssprintf("%s|%s", code, aux);
 	check_sys(write(fd, msg, strlen(msg)));
+	if (aux)
+		sfree(msg);
 	close(fd);
 }
 
@@ -183,12 +189,19 @@ void ctl_client_send(struct ctl_request *req)
 	check_sys(shutdown(usock, SHUT_WR));
 }
 
-char *ctl_client_get(void)
+char *ctl_client_get(char **aux)
 {
 	char *buf = salloc(RCV_BUF_SIZE);
 	ssize_t size;
+	char *saveptr, *code;
 
 	check_sys(size = read(usock, buf, RCV_BUF_SIZE - 1));
 	buf[size] = '\0';
-	return buf;
+
+	code = sstrdup(strtok_r(buf, "|", &saveptr));
+	if (aux)
+		*aux = sstrdup(strtok_r(NULL, "|", &saveptr));
+
+	sfree(buf);
+	return code;
 }

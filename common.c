@@ -92,6 +92,8 @@ char *sstrdup(const char *s)
 {
 	char * res;
 
+	if (!s)
+		return NULL;
 	res = strdup(s);
 	if (!res)
 		alloc_err(strlen(s));
