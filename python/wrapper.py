@@ -14,8 +14,11 @@ def communicate(data):
     data = json.dumps(data).encode()
     if len(data) > XFER_LIMIT:
         raise ValueError("Too large data")
-    pipe_out.write(data)
-    pipe_out.flush()
+    try:
+        pipe_out.write(data)
+        pipe_out.flush()
+    except BrokenPipeError:
+        sys.exit(1)
     data = json.loads(pipe_in.read(XFER_LIMIT).decode())
     if data['type'] == 'ok':
         return data;

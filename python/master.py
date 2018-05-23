@@ -76,8 +76,11 @@ def process_input(msg):
 def xmit(data):
     if len(data) > XFER_LIMIT:
         raise ValueError("Too large data")
-    pipe_out.write(data)
-    pipe_out.flush()
+    try:
+        pipe_out.write(data)
+        pipe_out.flush()
+    except BrokenPipeError:
+        sys.exit(1)
 
 meta = sys.argv[1]
 master = importlib.import_module(sys.argv[2])
