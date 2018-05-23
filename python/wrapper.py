@@ -37,16 +37,19 @@ class XferIO(io.TextIOBase):
         communicate({ 'type': 'print', 'message': s })
         return len(s)
 
+def xfer_input(prompt=''):
+    data = communicate({ 'type': 'input', 'message': str(prompt) })
+    return data['data']
+
 mod_name = '/box/program.py'
 
 spec = importlib.util.spec_from_file_location('__main__', mod_name)
 m = importlib.util.module_from_spec(spec)
 sys.argv[0] = mod_name
 
-#m.__dict__['inject'] = value
+m.__dict__['input'] = xfer_input
 
 xfer = XferIO()
-
 with contextlib.redirect_stdout(xfer):
     with contextlib.redirect_stderr(xfer):
         try:

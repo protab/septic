@@ -5,6 +5,7 @@ import os
 import os.path
 import selectors
 import sys
+import time
 
 limit_out = 65536
 XFER_LIMIT = 128 * 1024
@@ -33,7 +34,6 @@ def process_request(data):
             answer = process_input(msg)
         except Exception as e:
             raise PassThruException(e)
-        return
 
     else:
         raise ValueError('Unknown type {}'.format(data['type']))
@@ -99,7 +99,7 @@ while not finish:
             try:
                 answer = process_request(json.loads(data.decode()))
             except PassThruException as e:
-                raise e.args[0]
+                raise e.args[0] from None
             except Exception as e:
                 answer = format_exception(e)
             xmit(json.dumps(answer).encode())

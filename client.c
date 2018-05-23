@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include "common.h"
 #include "ctl.h"
+#include "fs.h"
 #include "log.h"
 
 static void help(char *argv0)
@@ -43,7 +44,7 @@ static bool output(char *buf, ssize_t size, char prefix, bool newline, bool afte
 			;
 		newline = (*ptr == '\n');
 		*ptr = '\0';
-		fputs(buf, stdout);
+		fputs(start, stdout);
 		if (newline)
 			fputs("\n", stdout);
 	}
@@ -126,6 +127,7 @@ static void watch(const char *meta_dir)
 		if (size && buf[size - 1] == '\n')
 			buf[--size] = '\0';
 
+		sunlink(fn_input);
 		check_sys(fd = creat(fn_tmp, 0666));
 		check_sys(write(fd, buf, size));
 		close(fd);
