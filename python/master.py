@@ -6,6 +6,7 @@ import os.path
 import selectors
 import sys
 import time
+import wrapper
 
 limit_out = 65536
 XFER_LIMIT = 128 * 1024

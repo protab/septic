@@ -6,10 +6,6 @@ import os
 import sys
 import traceback
 
-XFER_LIMIT = 128 * 1024
-pipe_in = io.open(3, 'rb', 0)
-pipe_out = io.open(4, 'wb', 0)
-
 def communicate(data):
     data = json.dumps(data).encode()
     if len(data) > XFER_LIMIT:
@@ -44,23 +40,28 @@ def xfer_input(prompt=''):
     data = communicate({ 'type': 'input', 'message': str(prompt) })
     return data['data']
 
-mod_name = '/box/program.py'
+if __name__ == '__main__':
+    XFER_LIMIT = 128 * 1024
+    pipe_in = io.open(3, 'rb', 0)
+    pipe_out = io.open(4, 'wb', 0)
 
-spec = importlib.util.spec_from_file_location('__main__', mod_name)
-m = importlib.util.module_from_spec(spec)
-sys.argv[0] = mod_name
+    mod_name = '/box/program.py'
 
-m.__dict__['input'] = xfer_input
+    spec = importlib.util.spec_from_file_location('__main__', mod_name)
+    m = importlib.util.module_from_spec(spec)
+    sys.argv[0] = mod_name
 
-xfer = XferIO()
-with contextlib.redirect_stdout(xfer):
-    with contextlib.redirect_stderr(xfer):
-        try:
-            spec.loader.exec_module(m)
-        except Exception as e:
-            # Do not print the first 3 lines of the stack trace to hide the
-            # machinery above. This unfortunately means we don't print chained
-            # exceptions.
-            et, ev, etb = sys.exc_info()
-            sys.stderr.write(''.join(traceback.format_list(traceback.extract_tb(etb)[3:])))
-            sys.stderr.write(''.join(traceback.format_exception_only(et, ev)))
+    m.__dict__['input'] = xfer_input
+
+    xfer = XferIO()
+    with contextlib.redirect_stdout(xfer):
+        with contextlib.redirect_stderr(xfer):
+            try:
+                spec.loader.exec_module(m)
+            except Exception as e:
+                # Do not print the first 3 lines of the stack trace to hide the
+                # machinery above. This unfortunately means we don't print chained
+                # exceptions.
+                et, ev, etb = sys.exc_info()
+                sys.stderr.write(''.join(traceback.format_list(traceback.extract_tb(etb)[3:])))
+                sys.stderr.write(''.join(traceback.format_exception_only(et, ev)))
