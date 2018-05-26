@@ -6,104 +6,185 @@ import os.path
 import selectors
 import sys
 import time
-import wrapper
+from wrapper import XferCodec, CodecError, XferConnection
 
-limit_out = 65536
-XFER_LIMIT = 128 * 1024
+class XferDict:
+    MAX_OBJECTS = 4096
+
+    def __init__(self):
+        self.objs_by_id = {}
+        self.objs_by_obj = {}
+        self.last_id = 0
+
+    def get_or_add_obj(self, obj):
+        if obj in self.objs_by_obj:
+            return self.objs_by_obj[obj]
+        if len(self.objs_by_obj) >= self.MAX_OBJECTS:
+            raise CodecError('Too many objects allocated')
+        self.last_id += 1
+        self.objs_by_obj[obj] = self.last_id
+        self.objs_by_id[self.last_id] = obj
+        return self.last_id
+
+    def __getitem__(self, key):
+        return self.objs_by_id[key]
+
+    def __delitem__(self, key):
+        try:
+            obj = self.objs_by_id[key]
+            del self.objs_by_id[key]
+            del self.objs_by_obj[obj]
+        except KeyError:
+            pass
+
+class XferMasterCodec(XferCodec):
+    def __init__(self):
+        self.remotes = XferDict()
+
+    def encode_obj(self, data):
+        return self.remotes.get_or_add_obj(data)
+
+    def decode_obj(self, data):
+        return self.remotes[data]
+
+    def del_obj(self, data):
+        del self.remotes[data]
 
 class PassThruException(Exception):
     pass
 
-def format_exception(e):
-    return {
-        'type': 'exception',
-        'exception': e.__class__name,
-        'args': e.args,
-    }
+class XferMasterConnection(XferConnection):
+    LIMIT_OUT = 65536
 
-def process_request(data):
-    if data['type'] == 'print':
-        msg = data['message']
-        try:
-            answer = process_print(msg)
-        except Exception as e:
-            raise PassThruException(e)
+    def __init__(self):
+        os.set_blocking(3, False)
+        super().__init__(XferMasterCodec())
+        self.limit_out = self.LIMIT_OUT
+        self.out = open(os.path.join(meta, 'output'), 'w')
 
-    elif data['type'] == 'input':
-        msg = data['message']
-        try:
-            answer = process_input(msg)
-        except Exception as e:
-            raise PassThruException(e)
+    def install(self, nobjs):
+        self.send('install', nobjs)
 
-    else:
-        raise ValueError('Unknown type {}'.format(data['type']))
+    def format_exception(self, e):
+        return ('exception', {
+            'exception': e.__class__.__name__,
+            'args': e.args,
+        })
 
-    answer['type'] = 'ok'
-    return answer
+    def loop(self):
+        sel = selectors.DefaultSelector()
+        sel.register(self.pipe_in, selectors.EVENT_READ)
+        while True:
+            again = True
+            for key, events in sel.select():
+                if key.fileobj == self.pipe_in:
+                    t, data = self.rcv()
+                    again = False
+            if again:
+                continue
+            if t is None:
+                # EOF
+                return
 
-def process_print(msg):
-    global limit_out
-
-    chars = len(msg)
-    if chars > limit_out:
-        msg = msg[:limit_out]
-        chars = limit_out
-    out.write(msg)
-    out.flush()
-    limit_out -= chars
-
-    return {}
-
-def process_input(msg):
-    tmp_name = os.path.join(meta, 'input.tmp')
-    in_name = os.path.join(meta, 'input')
-    f = open(tmp_name, 'w')
-    f.write(msg)
-    f.close()
-    os.rename(tmp_name, in_name)
-
-    in_name = os.path.join(meta, 'input.ret')
-    while not os.path.exists(in_name):
-        time.sleep(1)
-
-    f = open(in_name, 'r')
-    data = f.read()
-    f.close()
-    os.unlink(in_name)
-
-    return { 'data': data }
-
-def xmit(data):
-    if len(data) > XFER_LIMIT:
-        raise ValueError("Too large data")
-    try:
-        pipe_out.write(data)
-        pipe_out.flush()
-    except BrokenPipeError:
-        sys.exit(1)
-
-meta = sys.argv[1]
-master = importlib.import_module(sys.argv[2])
-os.set_blocking(3, False)
-pipe_in = io.open(3, 'rb', 0)
-pipe_out = io.open(4, 'wb', 0)
-out = open(os.path.join(meta, 'output'), 'w')
-
-sel = selectors.DefaultSelector()
-sel.register(pipe_in, selectors.EVENT_READ)
-finish = False
-while not finish:
-    for key, events in sel.select():
-        if key.fileobj == pipe_in:
-            data = pipe_in.read(XFER_LIMIT)
-            if len(data) == 0:
-                finish = True
-                break
             try:
-                answer = process_request(json.loads(data.decode()))
+                t, data = self.process(t, data)
             except PassThruException as e:
                 raise e.args[0] from None
             except Exception as e:
-                answer = format_exception(e)
-            xmit(json.dumps(answer).encode())
+                t, data = self.format_exception(e)
+            self.send(t, data)
+
+    def process_print(self, msg):
+        chars = len(msg)
+        if chars > self.limit_out:
+            msg = msg[:self.limit_out]
+            chars = self.limit_out
+        self.out.write(msg)
+        self.out.flush()
+        self.limit_out -= chars
+
+        return None
+
+    def process_input(self, msg):
+        tmp_name = os.path.join(meta, 'input.tmp')
+        in_name = os.path.join(meta, 'input')
+        f = open(tmp_name, 'w')
+        f.write(msg)
+        f.close()
+        os.rename(tmp_name, in_name)
+
+        in_name = os.path.join(meta, 'input.ret')
+        while not os.path.exists(in_name):
+            time.sleep(1)
+
+        f = open(in_name, 'r')
+        data = f.read()
+        f.close()
+        os.unlink(in_name)
+
+        return data
+
+    def process_get(self, obj, name):
+        # TODO: check whether 'name' is exported
+        return getattr(obj, name)
+
+    def process_call(self, obj, name, args, kwargs):
+        if name == '__call__':
+            # special case
+            return obj(*args, **kwargs)
+        # TODO: check whether 'name' is exported
+        return getattr(obj, name)(*args, **kwargs)
+
+    def process(self, t, data):
+        if t == 'print':
+            msg = data['message']
+            try:
+                answer = self.process_print(msg)
+            except Exception as e:
+                raise PassThruException(e)
+
+        elif t == 'input':
+            msg = data['message']
+            try:
+                answer = self.process_input(msg)
+            except Exception as e:
+                raise PassThruException(e)
+
+        elif t == 'get':
+            obj = data['obj']
+            name = data['name']
+            answer = self.process_get(obj, name)
+
+        elif t == 'del':
+            obj = data['obj']
+            try:
+                self.codec.del_obj(obj)
+            except Exception as e:
+                raise PassThruException(e)
+            answer = None
+
+        elif t == 'call':
+            obj = data['obj']
+            name = data['name']
+            args = data.get('args', ())
+            kwargs = data.get('kwargs', {})
+            answer = self.process_call(obj, name, args, kwargs)
+
+        else:
+            raise ValueError('Unknown type {}'.format(t))
+
+        return ('ok', answer)
+
+def uprint(*args, sep=' ', end='\n'):
+    conn.process_print(sep.join((str(s) for s in args)) + end)
+
+def neco(a):
+    print(a)
+    uprint('pro klienta')
+
+meta = sys.argv[1]
+master = importlib.import_module(sys.argv[2])
+
+conn = XferMasterConnection()
+conn.install({ 'neco': neco })
+conn.loop()
