@@ -30,6 +30,7 @@ static void help(char *argv0)
 		"  -h, --help             this help\n",
 		argv0
 	      );
+	/* There's also an undocumented parameter -b / --busy-poll. */
 }
 
 static bool output(char *buf, ssize_t size, char prefix, bool newline, bool after)
@@ -69,7 +70,7 @@ static bool nonempty(char *fn)
 }
 
 #define BUF_SIZE	(128 * 1024 + 1)
-static void watch(const char *meta_dir)
+static void watch(const char *meta_dir, bool busy_poll)
 {
 	char *buf = salloc(BUF_SIZE);
 	char *fn_stat = ssprintf("%s/status", meta_dir);
@@ -81,7 +82,8 @@ static void watch(const char *meta_dir)
 	bool newline = true;
 	bool seen = false;
 
-	usleep(100000);
+	if (!busy_poll)
+		usleep(100000);
 	while (1) {
 		fd_output = open(fn_output, O_RDONLY | O_NONBLOCK);
 		if (fd_output >= 0)
@@ -91,7 +93,8 @@ static void watch(const char *meta_dir)
 		if (!seen)
 			printf("* waiting\n");
 		seen = true;
-		usleep(500000);
+		if (!busy_poll)
+			usleep(500000);
 	}
 	printf("* connected\n");
 
@@ -133,7 +136,8 @@ static void watch(const char *meta_dir)
 		close(fd);
 		check_sys(rename(fn_tmp, fn_ret));
 again:
-		usleep(500000);
+		if (!busy_poll)
+			usleep(500000);
 	}
 
 	close(fd_output);
@@ -158,12 +162,14 @@ int main(int argc, char **argv)
 		{ "user", required_argument, NULL, 'u' },
 		{ "time", required_argument, NULL, 't' },
 		{ "kill", no_argument, NULL, 'k' },
+		{ "busy-poll", no_argument, NULL, 'b' },
 		{ "help", no_argument, NULL, 'h' },
 		{ 0 }
 	};
 	int opt;
 	struct ctl_request req;
 	char *meta_dir;
+	bool busy_poll = false;
 
 	log_init("client", false);
 
@@ -172,7 +178,7 @@ int main(int argc, char **argv)
 	req.max_secs = 30;
 	req.action = CTL_RUN;
 
-	while ((opt = getopt_long(argc, argv, "p:m:u:t:kh", longopts, NULL)) >= 0) {
+	while ((opt = getopt_long(argc, argv, "p:m:u:t:kbh", longopts, NULL)) >= 0) {
 		switch (opt) {
 		case 'p':
 			req.prg = to_path(optarg);
@@ -188,6 +194,9 @@ int main(int argc, char **argv)
 			break;
 		case 'k':
 			req.action = CTL_KILL;
+			break;
+		case 'b':
+			busy_poll = true;
 			break;
 		case 'h':
 			help(argv[0]);
@@ -205,6 +214,6 @@ int main(int argc, char **argv)
 	ctl_client_send(&req);
 	printf("* %s\n", ctl_client_get(&meta_dir));
 	if (meta_dir)
-		watch(meta_dir);
+		watch(meta_dir, busy_poll);
 	return 0;
 }
