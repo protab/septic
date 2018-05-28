@@ -90,6 +90,8 @@ static void watch(const char *meta_dir, bool busy_poll)
 			break;
 		if (errno != ENOENT)
 			check_sys(fd_output);
+		if (nonempty(fn_stat))
+			goto end;
 		if (!seen)
 			printf("* waiting\n");
 		seen = true;
@@ -143,6 +145,7 @@ again:
 	close(fd_output);
 	if (!newline)
 		fputs("\n", stdout);
+end:
 	printf("* finished\n");
 }
 
