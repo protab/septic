@@ -43,6 +43,9 @@ root/usr/bin/python3.6:
 root/usr/bin/wrapper.py: python/wrapper.py
 	install -m 644 $< $@
 
+test:
+	@tests/test.sh
+
 septic_install: septic
 	install -d $(DESTDIR)
 	install septic $(DESTDIR)

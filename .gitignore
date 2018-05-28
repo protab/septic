@@ -11,3 +11,4 @@ septic.service
 users
 *.o
 __pycache__
+.test.*

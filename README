@@ -12,3 +12,6 @@ make
 sudo make install
 sudo make mkdirs UID=septic
 sudo make systemd
+
+When developing the septic framework itself, do not forget to run
+'make test' before submitting patches.
