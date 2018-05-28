@@ -7,6 +7,7 @@ import selectors
 import sys
 import time
 from wrapper import XferCodec, CodecError, XferConnection
+from exporter import export, Export
 
 class XferDict:
     MAX_OBJECTS = 4096
@@ -124,15 +125,28 @@ class XferMasterConnection(XferConnection):
 
         return data
 
+    def check_access(self, obj, name, msg=None):
+        f = getattr(obj, name)
+        if getattr(f, 'exported_method', False):
+            return
+        if msg:
+            raise AttributeError(msg)
+        if type(obj) == type:
+            raise AttributeError("type object '{}' has no attribute '{}'".format(obj.__name__, name))
+        raise AttributeError("'{}' object has no attribute '{}'".format(type(obj).__name__, name))
+
     def process_get(self, obj, name):
-        # TODO: check whether 'name' is exported
+        self.check_access(obj, name)
         return getattr(obj, name)
 
     def process_call(self, obj, name, args, kwargs):
         if name == '__call__':
             # special case
+            if type(obj) == type:
+                # it's a class; check whether we can make an instance
+                self.check_access(obj, '__init__', "type object '{}' cannot be instantiated".format(obj.__name__))
             return obj(*args, **kwargs)
-        # TODO: check whether 'name' is exported
+        self.check_access(obj, name)
         return getattr(obj, name)(*args, **kwargs)
 
     def process(self, t, data):
@@ -178,13 +192,14 @@ class XferMasterConnection(XferConnection):
 def uprint(*args, sep=' ', end='\n'):
     conn.process_print(sep.join((str(s) for s in args)) + end)
 
-def neco(a):
-    print(a)
-    uprint('pro klienta')
-
 meta = sys.argv[1]
-master = importlib.import_module(sys.argv[2])
+
+spec = importlib.util.find_spec(sys.argv[2])
+master = importlib.util.module_from_spec(spec)
+master.__dict__['export'] = export
+master.__dict__['uprint'] = uprint
+spec.loader.exec_module(master)
 
 conn = XferMasterConnection()
-conn.install({ 'neco': neco })
+conn.install(Export.exported)
 conn.loop()
