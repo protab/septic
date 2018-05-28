@@ -193,8 +193,11 @@ def uprint(*args, sep=' ', end='\n'):
     conn.process_print(sep.join((str(s) for s in args)) + end)
 
 meta = sys.argv[1]
+mod_name = sys.argv[2]
 
-spec = importlib.util.find_spec(sys.argv[2])
+spec = importlib.util.find_spec(mod_name)
+if not spec:
+    raise ImportError("No module named '{}'".format(mod_name))
 master = importlib.util.module_from_spec(spec)
 master.__dict__['export'] = export
 master.__dict__['uprint'] = uprint
