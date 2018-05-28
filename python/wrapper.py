@@ -192,6 +192,13 @@ class XferIO(io.TextIOBase):
 def xfer_input(prompt=''):
     return conn.communicate('input', message=str(prompt))
 
+def excepthook(et, ev, etb):
+    # Do not print the first 3 lines of the stack trace to hide the
+    # machinery above. This unfortunately means we don't print chained
+    # exceptions.
+    sys.stderr.write(''.join(traceback.format_list(traceback.extract_tb(etb)[3:])))
+    sys.stderr.write(''.join(traceback.format_exception_only(et, ev)))
+
 if __name__ == '__main__':
     conn = XferClientConnection()
 
@@ -209,12 +216,8 @@ if __name__ == '__main__':
     xfer = XferIO()
     with contextlib.redirect_stdout(xfer):
         with contextlib.redirect_stderr(xfer):
+            sys.excepthook = excepthook
             try:
                 spec.loader.exec_module(m)
             except Exception as e:
-                # Do not print the first 3 lines of the stack trace to hide the
-                # machinery above. This unfortunately means we don't print chained
-                # exceptions.
-                et, ev, etb = sys.exc_info()
-                sys.stderr.write(''.join(traceback.format_list(traceback.extract_tb(etb)[3:])))
-                sys.stderr.write(''.join(traceback.format_exception_only(et, ev)))
+                sys.excepthook(*sys.exc_info())
