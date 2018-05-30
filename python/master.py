@@ -192,8 +192,9 @@ class XferMasterConnection(XferConnection):
 def uprint(*args, sep=' ', end='\n'):
     conn.process_print(sep.join((str(s) for s in args)) + end)
 
-meta = sys.argv[1]
-mod_name = sys.argv[2]
+sys.path.insert(1, sys.argv[1])
+meta = sys.argv[2]
+mod_name = sys.argv[3]
 
 spec = importlib.util.find_spec(mod_name)
 if not spec:

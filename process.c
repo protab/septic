@@ -122,6 +122,7 @@ static pid_t run_master(const char *meta_dir, const char *master, int pin, int p
 	reassign_pipe(pin, pout);
 	check_sys(execlp("python3", "python3",
 			ssprintf("%s/python/master.py", INSTALL_DIR),
+			MASTER_DIR,
 			meta_dir,
 			master,
 			NULL));
