@@ -7,7 +7,7 @@ for line in f:
     if line.startswith('box_root'):
         try:
             idx = line.index('=')
-            line = line[:idx] + '= ' + config['homefs_dir']
+            line = line[:idx] + '= ' + config['home_dir']
         except ValueError:
             pass
     print(line.rstrip('\n'))

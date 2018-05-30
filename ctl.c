@@ -39,7 +39,7 @@ static void fill_sun(struct sockaddr_un *sun)
 {
 	memset(sun, 0, sizeof(*sun));
 	sun->sun_family = AF_UNIX;
-	snprintf(sun->sun_path, UNIX_PATH_MAX, "%s/socket", RUNFS_DIR);
+	snprintf(sun->sun_path, UNIX_PATH_MAX, "%s/socket", RUN_DIR);
 }
 
 void ctl_client_init(void)
@@ -55,7 +55,7 @@ void ctl_init(void)
 {
 	struct sockaddr_un sun;
 
-	smkdir(RUNFS_DIR, 0777);
+	smkdir(RUN_DIR, 0777);
 	check_sys(usock = socket(AF_UNIX, SOCK_STREAM, 0));
 	fill_sun(&sun);
 	sunlink(sun.sun_path);

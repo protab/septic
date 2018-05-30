@@ -6,7 +6,7 @@
 install_dir = ${src_dir}
 master_dir = ${install_dir}/examples/master
 rootfs_dir = ${install_dir}/root
-homefs_dir = ${install_dir}/home
-metafs_dir = ${install_dir}/meta
-runfs_dir = ${install_dir}/run
+home_dir = ${install_dir}/home
+meta_dir = ${install_dir}/meta
+run_dir = ${install_dir}/run
 db_path = ${install_dir}/users

@@ -76,13 +76,13 @@ check_uid:
 	@if [[ -z "$(UID)" ]]; then echo "Need to specify the UID"; exit 1; fi
 
 meta:
-	mkdir -p `scripts/config.py metafs_dir`
-	chown $(UID) `scripts/config.py metafs_dir`
+	mkdir -p `scripts/config.py meta_dir`
+	chown $(UID) `scripts/config.py meta_dir`
 .PHONY: meta
 
 run:
-	mkdir -p `scripts/config.py runfs_dir`
-	chown $(UID) `scripts/config.py runfs_dir`
+	mkdir -p `scripts/config.py run_dir`
+	chown $(UID) `scripts/config.py run_dir`
 .PHONY: run
 
 mkdirs: check_uid meta run

@@ -12,7 +12,7 @@
 
 void meta_init(void)
 {
-	smkdir(METAFS_DIR, 0777);
+	smkdir(META_DIR, 0777);
 }
 
 static bool parse_line(char *buf, char **key, char **val)
@@ -31,7 +31,7 @@ int meta_get_status(const char *login, long id, struct meta_status_info *info)
 	char buf[256];
 
 	memset(info, 0, sizeof(*info));
-	path = ssprintf("%s/%s/%ld/status", METAFS_DIR, login, id);
+	path = ssprintf("%s/%s/%ld/status", META_DIR, login, id);
 	f = fopen(path, "r");
 	sfree(path);
 	if (!f)
@@ -56,7 +56,7 @@ int meta_get_status(const char *login, long id, struct meta_status_info *info)
 	}
 	fclose(f);
 
-	path = ssprintf("%s/%s/%ld/master", METAFS_DIR, login, id);
+	path = ssprintf("%s/%s/%ld/master", META_DIR, login, id);
 	f = fopen(path, "r");
 	sfree(path);
 	if (f) {
@@ -82,7 +82,7 @@ char *meta_new(const char *login)
 	struct dirent *e;
 	long max = 0;
 
-	base = ssprintf("%s/%s", METAFS_DIR, login);
+	base = ssprintf("%s/%s", META_DIR, login);
 	dir = opendir(base);
 	if (!dir && errno == ENOENT) {
 		smkdir(base, 0777);
@@ -131,7 +131,7 @@ int meta_cp_prg(const char *src, const char *meta_dir, int uid)
 	if (res < 0)
 		return res;
 
-	dst = ssprintf("%s/%d/box/program.py", HOMEFS_DIR, uid);
+	dst = ssprintf("%s/%d/box/program.py", HOME_DIR, uid);
 	res = cp(src, dst);
 	sfree(dst);
 	if (res < 0)
