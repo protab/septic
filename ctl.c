@@ -45,10 +45,16 @@ static void fill_sun(struct sockaddr_un *sun)
 void ctl_client_init(void)
 {
 	struct sockaddr_un sun;
+	int res;
 
 	check_sys(usock = socket(AF_UNIX, SOCK_STREAM, 0));
 	fill_sun(&sun);
-	check_sys(connect(usock, (const struct sockaddr *)&sun, sizeof(sun)));
+	res = connect(usock, (const struct sockaddr *)&sun, sizeof(sun));
+	if (res < 0 && (errno == ECONNREFUSED || errno == ENOENT)) {
+		log_err("Cannot connect to the septic daemon. Is it running?");
+		exit(1);
+	}
+	check_sys(res);
 }
 
 void ctl_init(void)
