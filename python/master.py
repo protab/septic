@@ -107,7 +107,7 @@ class XferMasterConnection(XferConnection):
         return None
 
     def process_input(self, msg):
-        tmp_name = os.path.join(meta, 'input.tmp')
+        tmp_name = os.path.join(meta, 'input.tsk')
         in_name = os.path.join(meta, 'input')
         f = open(tmp_name, 'w')
         f.write(msg)
