@@ -7,7 +7,7 @@ to a server (the expected mode of operation is the server providing a web
 based code editor) and run there in a sandboxed environment.
 
 The task specifies what objects (functions, classes, ...) are exported to
-the sandboxed program and its maximum trun time.
+the sandboxed program and its maximum run time.
 
 # Building and running
 
