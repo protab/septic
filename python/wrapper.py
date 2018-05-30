@@ -184,13 +184,17 @@ class XferClientConnection(XferConnection):
         return self.communicate('call', obj=obj, name=name, args=args, kwargs=kwargs)
 
 class XferIO(io.TextIOBase):
+    def __init__(self, conn : XferConnection, *args, **kwargs):
+        self.conn = conn
+        super(io.TextIOBase, self).__init__(*args, **kwargs)
+
     def write(self, s):
         s = str(s)
-        conn.communicate('print', message=s)
+        self.conn.communicate('print', message=s)
         return len(s)
 
-def xfer_input(prompt=''):
-    return conn.communicate('input', message=str(prompt))
+    def input(self, prompt=''):
+        return self.conn.communicate('input', message=str(prompt))
 
 def excepthook(et, ev, etb):
     # Do not print the first 3 lines of the stack trace to hide the
@@ -201,6 +205,7 @@ def excepthook(et, ev, etb):
 
 if __name__ == '__main__':
     conn = XferClientConnection()
+    xfer = XferIO(conn)
 
     mod_name = '/box/program.py'
 
@@ -208,12 +213,11 @@ if __name__ == '__main__':
     m = importlib.util.module_from_spec(spec)
     sys.argv[0] = mod_name
 
-    m.__dict__['input'] = xfer_input
+    m.__dict__['input'] = xfer.input
     for k, v in conn.start().items():
         m.__dict__[k] = v
 
     old_stdout = io.open(1, 'w')
-    xfer = XferIO()
     with contextlib.redirect_stdout(xfer):
         with contextlib.redirect_stderr(xfer):
             sys.excepthook = excepthook
