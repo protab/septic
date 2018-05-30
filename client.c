@@ -18,16 +18,16 @@ static void help(char *argv0)
 		"Usage: %s [OPTION]...\n"
 		"\n"
 		"Running a program:\n"
-		"  -p, --prog=PROGRAM     program to run in sandbox\n"
-		"  -m, --master=PROGRAM   master program\n"
-		"  -u, --user=LOGIN       [test] user\n"
-		"  -t, --time=SECONDS     [30] maximum time the program can run\n"
+		"  -p, --prog=PROGRAM      program to run in sandbox\n"
+		"  -t, --task=PROGRAM      the task to solve\n"
+		"  -u, --user=LOGIN        [test] user\n"
+		"  -m, --max-time=SECONDS  [30] maximum time the program can run\n"
 		"\n"
 		"Managing a running program:\n"
-		"  -k, --kill             kill a running program\n"
-		"  -w, --watch            watch the running program input/output\n"
+		"  -k, --kill              kill a running program\n"
+		"  -w, --watch             watch the running program input/output\n"
 		"\n"
-		"  -h, --help             this help\n",
+		"  -h, --help              this help\n",
 		argv0
 	      );
 	/* There's also an undocumented parameter -b / --busy-poll. */
@@ -161,9 +161,9 @@ int main(int argc, char **argv)
 {
 	static const struct option longopts[] = {
 		{ "prog", required_argument, NULL, 'p' },
-		{ "master", required_argument, NULL, 'm' },
+		{ "task", required_argument, NULL, 't' },
 		{ "user", required_argument, NULL, 'u' },
-		{ "time", required_argument, NULL, 't' },
+		{ "max-time", required_argument, NULL, 'm' },
 		{ "kill", no_argument, NULL, 'k' },
 		{ "busy-poll", no_argument, NULL, 'b' },
 		{ "help", no_argument, NULL, 'h' },
@@ -181,18 +181,18 @@ int main(int argc, char **argv)
 	req.max_secs = 30;
 	req.action = CTL_RUN;
 
-	while ((opt = getopt_long(argc, argv, "p:m:u:t:kbh", longopts, NULL)) >= 0) {
+	while ((opt = getopt_long(argc, argv, "p:t:u:m:kbh", longopts, NULL)) >= 0) {
 		switch (opt) {
 		case 'p':
 			req.prg = to_path(optarg);
 			break;
-		case 'm':
-			req.master = optarg;
+		case 't':
+			req.task = optarg;
 			break;
 		case 'u':
 			req.login = optarg;
 			break;
-		case 't':
+		case 'm':
 			to_int(optarg, &req.max_secs);
 			break;
 		case 'k':
@@ -209,8 +209,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (req.action == CTL_RUN && (!req.prg || !req.master)) {
-		log_err("missing -p or -m argument (try -h for help)");
+	if (req.action == CTL_RUN && (!req.prg || !req.task)) {
+		log_err("missing -p or -t argument (try -h for help)");
 		return 1;
 	}
 	ctl_client_init();

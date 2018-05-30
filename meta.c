@@ -56,12 +56,12 @@ int meta_get_status(const char *login, long id, struct meta_status_info *info)
 	}
 	fclose(f);
 
-	path = ssprintf("%s/%s/%ld/master", META_DIR, login, id);
+	path = ssprintf("%s/%s/%ld/task_pid", META_DIR, login, id);
 	f = fopen(path, "r");
 	sfree(path);
 	if (f) {
 		fgets(buf, sizeof(buf), f);
-		to_int(buf, &info->master);
+		to_int(buf, &info->task_pid);
 		fclose(f);
 	}
 
@@ -145,7 +145,7 @@ void meta_record_pid(const char *meta_dir, pid_t pid)
 	char *dst;
 	FILE *f;
 
-	dst = ssprintf("%s/master", meta_dir);
+	dst = ssprintf("%s/task_pid", meta_dir);
 	check_ptr(f = fopen(dst, "w"));
 	check_sys(fprintf(f, "%d", pid));
 	fclose(f);

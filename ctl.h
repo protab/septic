@@ -10,7 +10,7 @@ enum ctl_action {
 
 struct ctl_request {
 	char *login;
-	char *master;
+	char *task;
 	char *prg;
 	int max_secs;
 	int action;

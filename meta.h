@@ -9,7 +9,7 @@ struct meta_status_info {
 	bool finished;
 	bool killed;
 	int exitcode;
-	pid_t master;
+	pid_t task_pid;
 	char message[128];
 };
 

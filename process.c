@@ -27,8 +27,8 @@ static void proc_kill(const char *login)
 		log_info("nothing to kill");
 		return;
 	}
-	log_info("killing master pid %d", info.master);
-	kill(info.master, SIGKILL);
+	log_info("killing task pid %d", info.task_pid);
+	kill(info.task_pid, SIGKILL);
 }
 
 static void prepare_box(const char *bin_path, int uid, char *command)
@@ -108,7 +108,7 @@ static pid_t run_box(const char *bin_path, const char *meta_dir, int uid,
 	return 0; /* can't happen but needed to shut up gcc */
 }
 
-static pid_t run_master(const char *meta_dir, const char *master, int pin, int pout)
+static pid_t run_task(const char *meta_dir, const char *task, int pin, int pout)
 {
 	pid_t res;
 
@@ -118,20 +118,20 @@ static pid_t run_master(const char *meta_dir, const char *master, int pin, int p
 		return res;
 	}
 
-	log_reinit("master");
+	log_reinit("task");
 	reassign_pipe(pin, pout);
 	check_sys(execlp("python3", "python3",
 			ssprintf("%s/python/master.py", INSTALL_DIR),
-			MASTER_DIR,
+			TASKS_DIR,
 			meta_dir,
-			master,
+			task,
 			NULL));
 	return 0; /* can't happen but needed to shut up gcc */
 }
 
 void proc_start(int fd)
 {
-	pid_t res, pid_master, pid_box;
+	pid_t res, pid_task, pid_box;
 	struct ctl_request req;
 	char *meta_dir, *bin_path = NULL;
 	int pfd[4];
@@ -147,8 +147,8 @@ void proc_start(int fd)
 	log_info("getting parameters");
 	if (!ctl_parse(fd, &req))
 		exit(exitcode);
-	log_info("action %d, user %s, master %s, prg %s, max_secs %d",
-		 req.action, req.login, req.master, req.prg, req.max_secs);
+	log_info("action %d, user %s, task %s, prg %s, max_secs %d",
+		 req.action, req.login, req.task, req.prg, req.max_secs);
 
 	uid = usr_get_uid(req.login);
 	if (uid < 0) {
@@ -191,8 +191,8 @@ void proc_start(int fd)
 	check_sys(pipe(pfd));
 	check_sys(pipe(pfd + 2));
 
-	pid_master = run_master(meta_dir, req.master, pfd[0], pfd[3]);
-	log_info("master pid %d started", pid_master);
+	pid_task = run_task(meta_dir, req.task, pfd[0], pfd[3]);
+	log_info("task pid %d started", pid_task);
 
 	pid_box = run_box(bin_path, meta_dir, uid, req.max_secs, pfd[2], pfd[1]);
 	log_info("box pid %d started", pid_box);
@@ -200,13 +200,13 @@ void proc_start(int fd)
 	while (1) {
 		res = wait(NULL);
 
-		if (res == pid_master) {
-			log_info("master pid %d finished, killing box pid %d", pid_master, pid_box);
+		if (res == pid_task) {
+			log_info("task pid %d finished, killing box pid %d", pid_task, pid_box);
 			kill(pid_box, SIGTERM);
 			break;
 		} else if (res == pid_box) {
-			log_info("box pid %d finished, killing master pid %d", pid_box, pid_master);
-			kill(pid_master, SIGTERM);
+			log_info("box pid %d finished, killing task pid %d", pid_box, pid_task);
+			kill(pid_task, SIGTERM);
 			break;
 		}
 	}

@@ -199,10 +199,10 @@ mod_name = sys.argv[3]
 spec = importlib.util.find_spec(mod_name)
 if not spec:
     raise ImportError("No module named '{}'".format(mod_name))
-master = importlib.util.module_from_spec(spec)
-master.__dict__['export'] = export
-master.__dict__['uprint'] = uprint
-spec.loader.exec_module(master)
+task = importlib.util.module_from_spec(spec)
+task.__dict__['export'] = export
+task.__dict__['uprint'] = uprint
+spec.loader.exec_module(task)
 
 conn = XferMasterConnection()
 conn.install(Export.exported)

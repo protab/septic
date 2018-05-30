@@ -37,12 +37,12 @@ PYTHONPATH=$PWD/tests ./septic > $server_out 2>&1 &
 sleep 0.5
 prev_loglen=0
 for t in tests/*_c.py; do
-	m=${t##*/}
-	m=${m%_c.py}
-	echo "Test case $m"
-	m=${m}_s
+	tsk=${t##*/}
+	tsk=${tsk%_c.py}
+	echo "Test case $tsk"
+	tsk=${tsk}_s
 	cat tests/testlib.py $t > $tmpd/client.py
-	./client -b -m $m -p $tmpd/client.py | parse_client
+	./client -b -t $tsk -p $tmpd/client.py | parse_client
 	check_server
 done
 kill %1
