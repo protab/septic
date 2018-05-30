@@ -25,7 +25,6 @@ static void help(char *argv0)
 		"\n"
 		"Managing a running program:\n"
 		"  -k, --kill              kill a running program\n"
-		"  -w, --watch             watch the running program input/output\n"
 		"\n"
 		"  -h, --help              this help\n",
 		argv0
