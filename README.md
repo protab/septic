@@ -46,20 +46,6 @@ Note that while the `-t` option looks for the task in a predefined location
 name cannot contain slashes or the extension, the `-p` option requires
 a full path.
 
-## Configuration
-
-To override the default configuration, create or edit the `config.local`
-file in the source tree. Look for the values and documentation in the
-`config.defaults` file.
-
-## Septic development
-
-When developing the Septic tool itself, do not forget to run `make test`
-before submitting patches.
-
-To submit patches, please create a pull request at
-[github](https://github.com/protab/septic).
-
 # Task definition
 
 ## Exporting
@@ -257,3 +243,21 @@ Handling of input should be done in the following steps:
 5. The `input` file is deleted.
 6. The obtained user input is written to a temporary file.
 7. The temporary file is renamed to `input.ret`.
+
+# Advanced
+
+## Configuration
+
+To override the default configuration, create or edit the `config.local`
+file in the source tree. Look for the values and documentation in the
+`config.defaults` file.
+
+## Septic development
+
+For development of the Septic tool itself, follow the steps in [Building for
+task development](#building-for-task-development).
+
+Do not forget to run `make test` before submitting patches.
+
+To submit patches, please create a pull request at
+[github](https://github.com/protab/septic).
