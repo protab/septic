@@ -1,6 +1,6 @@
 # What is Septic
 
-Septic (Server Environment for Python ... Informatics Contest) is a tool
+Septic (Server Environment for ProTab Informatics Contest) is a tool
 providing run time environment for computer science contests. The attendees
 solve tasks by writing a program in Python. The Python program is uploaded
 to a server (the expected mode of operation is the server providing a web
