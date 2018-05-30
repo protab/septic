@@ -48,7 +48,11 @@ void ctl_client_init(void)
 
 	check_sys(usock = socket(AF_UNIX, SOCK_STREAM, 0));
 	fill_sun(&sun);
-	check_sys(connect(usock, (const struct sockaddr *)&sun, sizeof(sun)));
+	int result = connect(usock, (const struct sockaddr *)&sun, sizeof(sun));
+	if (result != 0) {
+		log_err("Can't connect to server. Is it running?");
+		check_sys(result);
+	}
 }
 
 void ctl_init(void)
