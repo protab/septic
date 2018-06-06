@@ -206,7 +206,7 @@ void proc_start(int fd)
 			break;
 		} else if (res == pid_box) {
 			log_info("box pid %d finished, killing task pid %d", pid_box, pid_task);
-			kill(pid_task, SIGTERM);
+			kill(pid_task, SIGKILL);
 			break;
 		}
 	}
