@@ -12,6 +12,7 @@ struct ctl_request {
 	char *login;
 	char *task;
 	char *prg;
+	char *token;
 	int max_secs;
 	int action;
 };

@@ -147,8 +147,8 @@ void proc_start(int fd)
 	log_info("getting parameters");
 	if (!ctl_parse(fd, &req))
 		exit(exitcode);
-	log_info("action %d, user %s, task %s, prg %s, max_secs %d",
-		 req.action, req.login, req.task, req.prg, req.max_secs);
+	log_info("action %d, user %s, task %s, prg %s, max_secs %d, token %s",
+		 req.action, req.login, req.task, req.prg, req.max_secs, req.token);
 
 	uid = usr_get_uid(req.login);
 	if (uid < 0) {
@@ -185,6 +185,9 @@ void proc_start(int fd)
 		ctl_report(fd, "not found", NULL);
 		goto out_free;
 	}
+
+	if (req.token)
+		meta_record_token(meta_dir, req.token);
 
 	ctl_report(fd, "ok", meta_dir);
 

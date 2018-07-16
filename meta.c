@@ -151,3 +151,15 @@ void meta_record_pid(const char *meta_dir, pid_t pid)
 	fclose(f);
 	sfree(dst);
 }
+
+void meta_record_token(const char *meta_dir, const char *token)
+{
+	char *dst;
+	FILE *f;
+
+	dst = ssprintf("%s/token", meta_dir);
+	check_ptr(f = fopen(dst, "w"));
+	check_sys(fprintf(f, "%s", token));
+	fclose(f);
+	sfree(dst);
+}

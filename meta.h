@@ -19,5 +19,6 @@ bool meta_running(const char *login);
 char *meta_new(const char *login);
 int meta_cp_prg(const char *src, const char *meta_dir, int uid);
 void meta_record_pid(const char *meta_dir, pid_t pid);
+void meta_record_token(const char *meta_dir, const char *token);
 
 #endif

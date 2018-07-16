@@ -98,6 +98,7 @@ static void parse_one(char *key, char *val, struct ctl_request *req)
 	store_str(key, val, "login", &req->login) ||
 	store_str(key, val, "task", &req->task) ||
 	store_str(key, val, "prg", &req->prg) ||
+	store_str(key, val, "token", &req->token) ||
 	store_int(key, val, "max_secs", &req->max_secs) ||
 	store_int(key, val, "action", &req->action);
 }
@@ -182,6 +183,7 @@ void ctl_request_free(struct ctl_request *req)
 	sfree(req->login);
 	sfree(req->task);
 	sfree(req->prg);
+	sfree(req->token);
 	memset(req, 0, sizeof(*req));
 }
 

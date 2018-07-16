@@ -201,7 +201,10 @@ the `run_dir` specified in the [configuration](#configuration).
 The protocol is simple: newline separated pairs of `key:value`. The
 recognized keys are `login`, `task`, `prg`, `max_secs` and `action`. The
 `action` is `1` for running a new program and `2` for killing the running
-program.
+program. There's also a non-mandatory `token` key whose value is an
+arbitrary string. The token value is not interpreted by Septic. It is
+simply stored in the meta directory and can be used for any purpose by the
+integrator.
 
 As a reply, an error string is returned optionally followed by a pipe
 character (`|`) and auxiliary data. If the error string is `"ok"`, the task
@@ -228,6 +231,7 @@ The meta directory contains the following files that may be of interest:
 * `input`: when present, contains a prompt message. See
   [below](#implementing-input) for input handling.
 * `program.py`: a copy of the user program.
+* `token`: the token if it was set. Otherwise, this file is not created.
 
 ## Implementing input
 
