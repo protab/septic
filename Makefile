@@ -51,6 +51,7 @@ septic_install: septic
 	install septic $(DESTDIR)
 	install isolate.conf $(DESTDIR)
 	install -d $(DESTDIR)/python
+	install -m 644 python/exporter.py $(DESTDIR)/python
 	install -m 644 python/master.py $(DESTDIR)/python
 	install -m 644 python/wrapper.py $(DESTDIR)/python
 
