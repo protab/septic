@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "common.h"
@@ -66,6 +67,7 @@ void ctl_init(void)
 	fill_sun(&sun);
 	sunlink(sun.sun_path);
 	check_sys(bind(usock, (const struct sockaddr *)&sun, sizeof(sun)));
+	check_sys(chmod(sun.sun_path, 0666));
 	check_sys(listen(usock, LISTEN_BACKLOG));
 	event_add(usock, EV_READ, ctl_accept);
 }
