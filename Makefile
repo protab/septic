@@ -91,7 +91,7 @@ isolate_clean:
 	make -C isolate clean
 
 clean: isolate_clean
-	rm -f $(OBJS) config.h septic.service septic isolate.bin isolate.conf .test.*
+	rm -f $(OBJS) config.h septic.service septic client client.o isolate.bin isolate.conf .test.*
 
 distclean: clean
 	rm -f config.local
