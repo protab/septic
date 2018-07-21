@@ -6,6 +6,7 @@ After=network.target
 Type=simple
 ExecStart=${install_dir}/septic -s
 Restart=always
+User=septic
 
 [Install]
 WantedBy=multi-user.target
