@@ -20,7 +20,7 @@ class XferCodec:
         if t in (bool, int, float, str, type(None)):
             return { 't': '.', 'd': data }
         if t in (list, tuple):
-            return { 't': 'list', 'd': [ self.r_encode(p, depth + 1) for p in data ] }
+            return { 't': t.__name__, 'd': [ self.r_encode(p, depth + 1) for p in data ] }
         if t == dict:
             return { 't': 'dict', 'd':
                 [ (self.r_encode(k, depth + 1), self.r_encode(v, depth + 1)) for k, v in data.items() ] }
@@ -38,6 +38,8 @@ class XferCodec:
             return data['d']
         if data['t'] == 'list':
             return [ self.r_decode(p, depth + 1) for p in data['d'] ]
+        if data['t'] == 'tuple':
+            return tuple( self.r_decode(p, depth + 1) for p in data['d'] )
         if data['t'] == 'dict':
             return { self.r_decode(k, depth + 1): self.r_decode(v, depth + 1) for k, v in data['d'] }
         if data['t'] == 'bytes':
