@@ -24,6 +24,8 @@ class XferCodec:
         if t == dict:
             return { 't': 'dict', 'd':
                 [ (self.r_encode(k, depth + 1), self.r_encode(v, depth + 1)) for k, v in data.items() ] }
+        if t in (bytes, bytearray):
+            return { 't': t.__name__, 'd': tuple(data) }
         return { 't': 'obj', 'd': self.encode_obj(data) }
 
     def encode(self, data):
@@ -38,6 +40,10 @@ class XferCodec:
             return [ self.r_decode(p, depth + 1) for p in data['d'] ]
         if data['t'] == 'dict':
             return { self.r_decode(k, depth + 1): self.r_decode(v, depth + 1) for k, v in data['d'] }
+        if data['t'] == 'bytes':
+            return bytes(data['d'])
+        if data['t'] == 'bytearray':
+            return bytearray(data['d'])
         if data['t'] == 'obj':
             return self.decode_obj(data['d'])
         raise CodecError('Unknown type')
