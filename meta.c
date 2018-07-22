@@ -102,6 +102,7 @@ char *meta_new(const char *login)
 	max++;
 	path = ssprintf("%s/%ld", base, max);
 	smkdir(path, 0777);
+	check_sys(chmod(path, 0777));
 
 	dst = ssprintf("%s/0", base);
 	src = ssprintf("%ld", max);
