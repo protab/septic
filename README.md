@@ -263,5 +263,5 @@ task development](#building-for-task-development).
 
 Do not forget to run `make test` before submitting patches.
 
-To submit patches, please create a pull request at
-[github](https://github.com/protab/septic).
+To submit patches, please create a pull request on
+[GitHub](https://github.com/protab/septic).
