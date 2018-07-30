@@ -128,7 +128,7 @@ program.
 
 ## Exporting under a different name
 
-The `export` decorator accepts one keyword argument, `name`. It allows to
+The `export` decorator accepts a keyword argument `name`. It allows to
 export the given function or class under a different name. It doesn't work
 for methods, though (this limitation can be lifted if there's a demand).
 
@@ -139,6 +139,16 @@ Example:
 def my_func():
     ...
 ```
+
+## Exporting large data
+
+When a list, tuple or dict object is exported, it is copied to the user.
+However, this is not always feasible. In particular, when the data in
+question are too large, it will hit the internal message size limit.
+
+In such case, the list, tuple or dict object may be exported as an object by
+passing a keyword argument `large`. Note that any access to such object will
+be done as a remote call.
 
 ## Returning objects
 

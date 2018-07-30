@@ -9,6 +9,13 @@ import time
 from wrapper import XferCodec, CodecError, XferConnection
 from exporter import export, Export
 
+def is_hashable(obj):
+    try:
+        hash(obj)
+    except TypeError:
+        return False
+    return True
+
 class XferDict:
     MAX_OBJECTS = 4096
 
@@ -18,12 +25,14 @@ class XferDict:
         self.last_id = 0
 
     def get_or_add_obj(self, obj):
-        if obj in self.objs_by_obj:
+        hashable = is_hashable(obj)
+        if hashable and obj in self.objs_by_obj:
             return self.objs_by_obj[obj]
-        if len(self.objs_by_obj) >= self.MAX_OBJECTS:
+        if len(self.objs_by_id) >= self.MAX_OBJECTS:
             raise CodecError('Too many objects allocated')
         self.last_id += 1
-        self.objs_by_obj[obj] = self.last_id
+        if hashable:
+            self.objs_by_obj[obj] = self.last_id
         self.objs_by_id[self.last_id] = obj
         return self.last_id
 
@@ -34,7 +43,8 @@ class XferDict:
         try:
             obj = self.objs_by_id[key]
             del self.objs_by_id[key]
-            del self.objs_by_obj[obj]
+            if is_hashable(obj):
+                del self.objs_by_obj[obj]
         except KeyError:
             pass
 
@@ -126,6 +136,11 @@ class XferMasterConnection(XferConnection):
         return data
 
     def check_access(self, obj, name, msg=None):
+        # for C (builtin) objects exported with large=True, we need to allow
+        # access unconditionally, as we can't set attributes:
+        if type(obj) in (tuple, list, dict, type(iter([])), type(iter({})), type(iter(()))):
+            return
+
         f = getattr(obj, name)
         if getattr(f, 'exported_method', False):
             return

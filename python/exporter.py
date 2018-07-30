@@ -1,4 +1,5 @@
 import inspect
+from wrapper import LargeObject
 
 class ExportError(Exception):
     pass
@@ -23,11 +24,13 @@ class Export:
             self.kind = 2
             if args:
                 raise TypeError('export() takes 0 positional arguments')
-            for k, v in kwargs.items():
-                if k == 'name':
-                    self.name = v
-                else:
-                    raise TypeError("export() got an unexpected keyword argument '{}'".format(k))
+        for k, v in kwargs.items():
+            if k == 'name' and self.kind == 2:
+                self.name = v
+            elif k == 'large' and v and self.kind == 0:
+                self.set_large()
+            else:
+                raise TypeError("export() got an unexpected keyword argument '{}'".format(k))
 
     def __call__(self, *args, **kwargs):
         if self.kind == 0:
@@ -40,6 +43,9 @@ class Export:
         if self.name is None:
             self.name = obj.__name__
         self.exported[self.name] = obj
+
+    def set_large(self):
+        self.exported[self.name] = LargeObject(self.exported[self.name])
 
     def decorate(self, obj):
         if inspect.isclass(obj):

@@ -7,6 +7,10 @@ import sys
 import traceback
 import weakref
 
+class LargeObject:
+    def __init__(self, obj):
+        self.obj = obj
+
 class CodecError(Exception):
     pass
 
@@ -26,6 +30,8 @@ class XferCodec:
                 [ (self.r_encode(k, depth + 1), self.r_encode(v, depth + 1)) for k, v in data.items() ] }
         if t in (bytes, bytearray):
             return { 't': t.__name__, 'd': tuple(data) }
+        if t == LargeObject:
+            data = data.obj
         return { 't': 'obj', 'd': self.encode_obj(data) }
 
     def encode(self, data):
@@ -110,6 +116,8 @@ class RemoteObject:
         return conn.call(self, '__setitem__', key, value)
     def __iter__(self):
         return conn.call(self, '__iter__')
+    def __next__(self):
+        return conn.call(self, '__next__')
     def __call__(self, *args, **kwargs):
         return conn.call(self, '__call__', *args, **kwargs)
 
